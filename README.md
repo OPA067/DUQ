@@ -1,16 +1,16 @@
 <div align="left">
   
-# 【Paper Title 】🔥🔥🔥DUQ:Dual Uncertainty Quantification for Text-Video Retrieval
+# 🔥 DUQ:Dual Uncertainty Quantification for Text-Video Retrieval
 
 
-## 📣📣📣 Updates
-* **[2025/01/17]**: We have released the complete training and testing code.
+## 📣 Updates
+* **[2025/01/18]**: We have released the complete training and testing code.
 
-## ⚡⚡⚡ Framework
+## ⚡ Framework
 
-## 😍😍😍 Visualization
+## 😍 Visualization
 
-## 🚀🚀🚀 Quick Start
+## 🚀 Quick Start
 ### Setup
 
 #### Setup code environment
@@ -54,6 +54,6 @@ python train.py --exp_name=MSRVTT-train --dataset_name=MSRVTT --log_step=100 --e
 python test.py  --exp_name=MSRVTT-test --save_memory_mode --dataset_name=MSRVTT --batch_size=32 --num_workers=8 --videos_dir=MSRVTT/videos/ --noclip_lr=3e-5 --load_epoch=0 --datetime=test
 ```
 
-## 🎗️🎗️🎗️ Acknowledgments
+## 🎗️ Acknowledgments
 Our code is based on [CLIP4Clip](https://github.com/ArrowLuo/CLIP4Clip/), [X-Pool](https://github.com/layer6ai-labs/xpool), [T-Mass](https://github.com/Jiamian-Wang/T-MASS-text-video-retrieval). We sincerely appreciate for their contributions.
 
