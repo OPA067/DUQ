@@ -18,7 +18,7 @@
 conda create -n DUQ python=3.8
 conda activate DUQ
 pip install -r requirements.txt
-pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 ```
 
 #### Download CLIP Model
