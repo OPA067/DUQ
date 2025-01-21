@@ -10,7 +10,6 @@ class Distance_Module(nn.Module):
         self.embed_dim = config.embed_dim
         self.num_frames = config.num_frames
 
-
     def forward(self, Prob_text, Prob_video):
 
         b = Prob_text.size(0)

@@ -11,7 +11,6 @@ from modules.loss import KLdivergence
 from modules.metrics import sim_matrix_training
 from modules.video_transfomer import video_transformer
 
-
 class CLIPStochastic(nn.Module):
     def __init__(self, config: Config):
         super(CLIPStochastic, self).__init__()
@@ -127,9 +126,9 @@ class CLIPStochastic(nn.Module):
 
         inter_dis_loss, inter_dis_u = self.Inter_Module(dis_matrix)
 
-        sim_matrix = ((1 - dis_matrix) * torch.exp(-0.1 * inter_dis_u)) * (torch.exp(-0.1 * intra_sim_u.T) * sim_matrix)
-        # sim_matrix = (1 - dis_matrix) * sim_matrix
         # sim_matrix = sim_matrix
+        # sim_matrix = (1 - dis_matrix) * sim_matrix
+        sim_matrix = ((1 - dis_matrix) * torch.exp(-0.1 * inter_dis_u)) * (torch.exp(-0.1 * intra_sim_u.T) * sim_matrix)
 
         return sim_matrix
 

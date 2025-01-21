@@ -5,6 +5,7 @@
 
 ## 📣 Updates
 * **[2025/01/18]**: We have released the complete training and testing code.
+* **[2025/01/21]**: We have released the complete video Q&A code.
 
 ## ⚡ Framework
 
@@ -31,27 +32,65 @@ Download ViT-B/16 Model:  [ViT-B/16](https://huggingface.co/openai/clip-vit-base
 
 <div align=center>
 
-|       Datasets        |                             Download Link                              |
-|:---------------------:|:----------------------------------------------------------------------:|
-|        MSRVTT         |      [Download](http://ms-multimedia-challenge.com/2017/dataset)       |  
-|         MSVD          | [Download](https://www.cs.utexas.edu/users/ml/clamp/videoDescription/) | 
-| ActivityNet |           [Download](http://activity-net.org/download.html)            | 
-| Charades |         [Download](https://github.com/activitynet/ActivityNet)         |  
-| DiDeMo |       [Download](https://github.com/LisaAnne/LocalizingMoments)        | 
-| VATEX |                              [Download](https://eric-xw.github.io/vatex-website/download.html)                              | 
+|  Datasets   |                             Download Link                              |             Training weights              |
+|:-----------:|:----------------------------------------------------------------------:|:-----------------------------------------:|
+|   MSRVTT    |      [Download](http://ms-multimedia-challenge.com/2017/dataset)       | [Download](https://github.com/OPA067/DUQ) |
+|    LSMDC    | [Download](https://sites.google.com/site/describingmovies/download)| [Download](https://github.com/OPA067/DUQ) |
+|    MSVD     | [Download](https://www.cs.utexas.edu/users/ml/clamp/videoDescription/) | [Download](https://github.com/OPA067/DUQ) |
+| ActivityNet |           [Download](http://activity-net.org/download.html)            | [Download](https://github.com/OPA067/DUQ) |
+|  Charades   |         [Download](https://github.com/activitynet/ActivityNet)         | [Download](https://github.com/OPA067/DUQ) |
+|   DiDeMo    |       [Download](https://github.com/LisaAnne/LocalizingMoments)        | [Download](https://github.com/OPA067/DUQ) |
+|    VATEX    |                              [Download](https://eric-xw.github.io/vatex-website/download.html)  |                     [Download](https://github.com/OPA067/DUQ) |                      | 
 
 </div>
 
-#### 💪 Training
-Run the following training code to resume the above results. Take MSRVTT as an example.
-
+#### 💪 Text-Video Retrieval Training
+The training instructions for all datasets are given below, where "--split" needs to be specified according to the dataset size.
+##### MSRVTT
 ```python
 python train.py --exp_name=MSRVTT-train --dataset_name=MSRVTT --log_step=100 --evals_per_epoch=5 --batch_size=32 --videos_dir=MSRVTT/videos/ --split=8
 ```
-
-#### 💪 Testing
+##### MSRVTT-ViT-B/16
 ```python
-python test.py  --exp_name=MSRVTT-test --save_memory_mode --dataset_name=MSRVTT --batch_size=32 --num_workers=8 --videos_dir=MSRVTT/videos/ --noclip_lr=3e-5 --load_epoch=0 --datetime=test
+python train.py --exp_name=MSRVTT-train-16 --dataset_name=MSRVTT --clip_arch=ViT-B/16 --log_step=100 --evals_per_epoch=5 --batch_size=8 --videos_dir=MSRVTT/videos/ --split=8
+```
+##### LSMDC
+```python
+python train.py --exp_name=LSMDC-train  --dataset_name=LSMDC --num_epochs=5 --num_frames=12 --log_step=10 --batch_size=32 --videos_dir=LSMDC --split=9
+```
+##### ActivityNet
+```python
+python train.py --exp_name=ActivityNet-train  --dataset_name=ActivityNet --num_epochs=5 --num_frames=12 --log_step=10 --batch_size=32 --videos_dir=ActivityNet/videos --split=33
+```
+##### Charades
+```python
+python train.py --exp_name=Charades-train --dataset_name=Charades --num_frames=12 --log_step=10 --batch_size=32 --videos_dir=Charades/videos/ --split=23
+```
+##### VATEX
+```python
+python train.py --exp_name=VATEX-train --dataset_name=VATEX --log_step=10 --batch_size=32 --videos_dir=VATEX/videos --split=10
+```
+##### DiDeMo
+```python
+python train.py --exp_name=DiDeMo-train --dataset_name=DiDeMo --log_step=10 --batch_size=32 --num_workers=8 --videos_dir=DiDeMo/videos/ --split=17
+```
+##### MSVD
+```python
+python train.py --exp_name=MSVD-train --dataset_name=MSVD --log_step=1 --batch_size=32 --videos_dir=MSVD/videos/ --split=10
+```
+
+#### 💪 Example of Text-Video Retrieval Testing
+```python
+python test.py  --exp_name=MSRVTT-test --save_memory_mode --dataset_name=MSRVTT --batch_size=32 --num_workers=8 --videos_dir=MSRVTT/videos/
+```
+
+#### 💪 Video Question Answering Training
+```python
+python train.py --exp_name=MSRVTT-train --dataset_name=MSRVTT-VQA --log_step=1 --evals_per_epoch=5 --batch_size=32 --videos_dir=MSRVTT/videos/ --num_workers=8
+```
+#### 💪 Example of Video Question Answering Testing
+```python
+python test.py --exp_name=MSRVTT-test --save_memory_mode --dataset_name=MSRVTT-VQA --batch_size=32 --num_workers=8 --videos_dir=MSRVTT/videos/ 
 ```
 
 ## 🎗️ Acknowledgments
