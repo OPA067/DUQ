@@ -2,7 +2,9 @@ import os
 import numpy as np
 import pandas as pd
 from collections import defaultdict
-from modules.basic_utils import load_json, load_jsonl
+
+from VQA.modules.basic_utils import load_jsonl
+from modules.basic_utils import load_json
 from torch.utils.data import Dataset
 from config.base_config import Config
 from datasets.video_capture import VideoCapture
@@ -16,7 +18,7 @@ class MSRVTTDataset(Dataset):
         self.img_transforms = img_transforms
         self.split_type = split_type
 
-        dir = 'MSRVTT/QA'
+        dir = 'MSRVTT'
         self.train_jsonl = load_jsonl(dir + '/train.jsonl')
         self.test_jsonl = load_jsonl(dir + '/test.jsonl')
         self.val_jsonl = load_jsonl(dir + '/val.jsonl')

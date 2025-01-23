@@ -66,19 +66,11 @@ python train.py --exp_name=ActivityNet-train  --dataset_name=ActivityNet --num_e
 ```python
 python train.py --exp_name=Charades-train --dataset_name=Charades --num_frames=12 --log_step=10 --batch_size=32 --videos_dir=Charades/videos/ --split=23
 ```
-##### VATEX
-```python
-python train.py --exp_name=VATEX-train --dataset_name=VATEX --log_step=10 --batch_size=32 --videos_dir=VATEX/videos --split=10
-```
 ##### DiDeMo
 ```python
 python train.py --exp_name=DiDeMo-train --dataset_name=DiDeMo --log_step=10 --batch_size=32 --num_workers=8 --videos_dir=DiDeMo/videos/ --split=17
 ```
-##### MSVD
-```python
-python train.py --exp_name=MSVD-train --dataset_name=MSVD --log_step=1 --batch_size=32 --videos_dir=MSVD/videos/ --split=10
-```
-
+......
 #### 💪 Example of Text-Video Retrieval Testing
 ```python
 python test.py  --exp_name=MSRVTT-test --save_memory_mode --dataset_name=MSRVTT --batch_size=32 --num_workers=8 --videos_dir=MSRVTT/videos/

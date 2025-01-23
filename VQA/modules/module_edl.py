@@ -31,11 +31,7 @@ class EDL(nn.Module):
     def forward(self, vqa_logits, label, num_classes):
 
         label = torch.nn.functional.one_hot(label, num_classes=num_classes)
-
-        '''Evidence Generation of Ablation Study'''
         evidence = F.relu(vqa_logits)
-        # evidence = torch.exp(matrix)
-        # evidence = F.softplus(matrix)
         alpha = evidence + 1
 
         loss = torch.mean(self.mse_loss(label, alpha))

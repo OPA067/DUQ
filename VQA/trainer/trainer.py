@@ -3,11 +3,11 @@ import time
 import torch
 import numpy as np
 from tqdm import tqdm
+
+from VQA.modules.metrics import AverageMeter, accuracy
 from config.all_config import gen_log
 from config.base_config import Config
 from collections import defaultdict, deque
-
-from modules.metrics import np_softmax, AverageMeter, accuracy
 from trainer.base_trainer import BaseTrainer
 
 class Trainer(BaseTrainer):
@@ -55,8 +55,8 @@ class Trainer(BaseTrainer):
             data['video'] = data['video'].to(self.device)
             data['label'] = data['label'].to(self.device)
 
-            output_step, ce_loss, edl_loss = self.model(data, is_train=True)
-            loss_tv = loss_tv + self.loss(output_step, self.model.clip.logit_scale)
+            output, ce_loss, edl_loss = self.model(data, is_train=True)
+            loss_tv = loss_tv + self.loss(output, self.model.clip.logit_scale)
 
             loss_all = loss_tv + ce_loss + edl_loss
 
