@@ -6,6 +6,7 @@
 ## 📣 Updates
 * **[2025/01/18]**: We have released the complete training and testing code.
 * **[2025/01/21]**: We have released the complete video Q&A code.
+* **[2025/04/28]**: We have updated some of the details.
 
 ## ⚡ Framework
 
