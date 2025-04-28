@@ -44,17 +44,17 @@ class CLIPStochastic(nn.Module):
         video_data = video_data.reshape(-1, 3, self.config.input_res, self.config.input_res)
         label = data['label']
 
-        _, t_feat = self.clip.get_text_features(**text_data)
-        _, v_feat = self.clip.get_image_features(video_data)
+        w_feat, s_feat = self.clip.get_text_features(**text_data)
+        _, f_feat = self.clip.get_image_features(video_data)
 
-        v_feat = v_feat.reshape(batch_size, self.config.num_frames, -1)
+        f_feat = f_feat.reshape(batch_size, self.config.num_frames, -1)
         if is_train:
-            v_feat = self.video_transformer(t_feat, v_feat)
-            output = sim_matrix_training(t_feat, v_feat)
+            v_feat = self.video_transformer(s_feat, f_feat)
+            output = sim_matrix_training(s_feat, v_feat)
 
-            t_feat = self.t_proj(t_feat)
+            s_feat = self.t_proj(s_feat)
             v_feat = self.v_proj(v_feat)
-            input = torch.cat((t_feat, v_feat), dim=-1)
+            input = torch.cat((s_feat, v_feat), dim=-1)
             pooled_output = self.dropout(input)
             vqa_logits = self.classifier(pooled_output)
             ce_loss = self.calc_loss(vqa_logits, label)
@@ -63,10 +63,10 @@ class CLIPStochastic(nn.Module):
 
             return output, ce_loss, edl_loss
         else:
-            v_feat = self.video_transformer(t_feat, v_feat)
-            t_feat = self.t_proj(t_feat)
+            v_feat = self.video_transformer(s_feat, f_feat)
+            s_feat = self.t_proj(s_feat)
             v_feat = self.v_proj(v_feat)
-            input = torch.cat((t_feat, v_feat), dim=-1)
+            input = torch.cat((s_feat, v_feat), dim=-1)
             pooled_output = self.dropout(input)
             vqa_logits = self.classifier(pooled_output)
 

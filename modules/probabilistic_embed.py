@@ -2,10 +2,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from modules.Local_Feat_Agg import MultiHeadSelfAttention
+from modules.local_feat_agg_module import MultiHeadSelfAttention
 
-
-class PER_Net(nn.Module):
+class probabilistic_embed(nn.Module):
     def __init__(self, d_in, d_out, d_h):
         super().__init__()
 

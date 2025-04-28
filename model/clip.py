@@ -2,11 +2,11 @@ import torch
 import torch.nn as nn
 
 from config.base_config import Config
-from modules.Distance_Module import Distance_Module
-from modules.Inter_Modele import Inter_Modele
-from modules.Intra_Module import Intra_Module
-from modules.Local_Feat_Agg import LFA_Net
-from modules.Probabilistic_Emb_Rep import sample_gaussian_tensors, PER_Net
+from modules.distance_module import distance_module
+from modules.inter_module import inter_module
+from modules.intra_module import intra_module
+from modules.local_feat_agg_module import lfa_module
+from modules.probabilistic_embed import sample_gaussian_tensors, probabilistic_embed
 from modules.loss import KLdivergence
 from modules.metrics import sim_matrix_training
 from modules.video_transfomer import video_transformer
@@ -18,13 +18,14 @@ class CLIPStochastic(nn.Module):
         self.n_text_samples = self.config.n_text_samples
         self.n_video_samples = self.config.n_video_samples
 
-        '''
-            self.alpha = self.config.alpha ==>> 1e-1
-            self.beta = self.config.beta   ==>> 1e-4
-        '''
+        """ self.alpha = self.config.alpha         ==>> 1e-1
+            self.beta = self.config.beta           ==>> 1e-4
+            self.embed_dim = self.config.embed_dim ==>> 512"""
         self.alpha = self.config.alpha
         self.beta = self.config.beta
+        self.embed_dim = self.config.embed_dim
 
+        """Choose pretrained base model \in [ViT-B/32, ViT-B/16]"""
         from transformers import CLIPModel
         if config.clip_arch == 'ViT-B/32':
             self.clip = CLIPModel.from_pretrained("./openai/clip-vit-base-patch32")
@@ -34,24 +35,27 @@ class CLIPStochastic(nn.Module):
             raise ValueError
 
         config.pooling_type = 'transformer'
+        """Video frame features v_f ==>> pooling video features
+           Cross-Attention Module, or using Mean, MLP and Self-Attention Module."""
         self.video_transformer = video_transformer(config)
-        self.Intra_Module = Intra_Module(config)
+        """Intra-pair Similarity Uncertainty Module"""
+        self.intra_module = intra_module(config)
 
-        embed_dim = self.config.embed_dim
-        self.LFA_Net_text = LFA_Net(1, embed_dim, embed_dim, embed_dim // 2)
-        self.PER_Net_text = PER_Net(embed_dim, embed_dim, embed_dim // 2)
-
-        self.LFA_Net_video = LFA_Net(1, embed_dim, embed_dim, embed_dim // 2)
-        self.PER_Net_video = PER_Net(embed_dim, embed_dim, embed_dim // 2)
-
-        self.Distance_Module = Distance_Module(config)
-        self.Inter_Module = Inter_Modele(config)
+        """Inter-pair Distance Uncertainty Module"""
+        """Local Feature Aggregation"""
+        self.lfa_text = lfa_module(1, self.embed_dim, self.embed_dim, self.embed_dim // 2)
+        self.per_text = probabilistic_embed(self.embed_dim, self.embed_dim, self.embed_dim // 2)
+        self.lfa_video = lfa_module(1, self.embed_dim, self.embed_dim, self.embed_dim // 2)
+        self.per_video = probabilistic_embed(self.embed_dim, self.embed_dim, self.embed_dim // 2)
+        self.distance_module = distance_module(config)
+        self.inter_module = inter_module(config)
+        """KL-divergence loss"""
         self.loss_kl = KLdivergence()
 
-    def probabilistic_text(self, sentence_feat, word_feat):
+    def probabilistic_text(self, s_feat, w_feat):
         output = {}
-        out = self.LFA_Net_text(sentence_feat, word_feat)
-        uncertain_out = self.PER_Net_text(sentence_feat, word_feat, out)
+        out = self.lfa_text(s_feat, w_feat)
+        uncertain_out = self.per_text(s_feat, w_feat, out)
 
         output['mu'] = uncertain_out['mu']
         output['sigma'] = uncertain_out['sigma']
@@ -59,10 +63,10 @@ class CLIPStochastic(nn.Module):
 
         return output
 
-    def probabilistic_video(self, video_feat, frame_feat):
+    def probabilistic_video(self, v_feat, f_feat):
         output = {}
-        out = self.LFA_Net_video(video_feat, frame_feat)
-        uncertain_out = self.PER_Net_video(video_feat, frame_feat, out)
+        out = self.lfa_video(v_feat, f_feat)
+        uncertain_out = self.per_video(v_feat, f_feat, out)
 
         output['mu'] = uncertain_out['mu']
         output['sigma'] = uncertain_out['sigma']
@@ -76,58 +80,64 @@ class CLIPStochastic(nn.Module):
         video_data = data['video']
         video_data = video_data.reshape(-1, 3, self.config.input_res, self.config.input_res)
 
-        _, t_feat = self.clip.get_text_features(**text_data)
-        _, v_feat = self.clip.get_image_features(video_data)
-        v_feat = v_feat.reshape(batch_size, self.config.num_frames, -1)
+        w_feat, s_feat = self.clip.get_text_features(**text_data)
+        _, f_feat = self.clip.get_image_features(video_data)
+        f_feat = f_feat.reshape(batch_size, self.config.num_frames, -1)
 
         if is_train:
 
-            v_pooled = self.video_transformer(t_feat, v_feat)
-            sim_matrix = sim_matrix_training(t_feat, v_pooled)
-            intra_sim_loss, _ = self.Intra_Module(sim_matrix)
+            v_feat = self.video_transformer(s_feat, f_feat)
+            sim_matrix = sim_matrix_training(s_feat, v_feat)
+            intra_sim_loss, _ = self.intra_module(sim_matrix)
 
-            t_feat = t_feat / t_feat.norm(dim=-1, keepdim=True)
-            prob_text = self.probabilistic_text(t_feat, t_feat.unsqueeze(1))
+            s_feat = s_feat / s_feat.norm(dim=-1, keepdim=True)
+            w_feat = w_feat / w_feat.norm(dim=-1, keepdim=True)
+            prob_text = self.probabilistic_text(s_feat, w_feat)
             prob_text_embedding = prob_text['embeddings']           # [B, K, D]
             prob_text_sigma = prob_text['sigma']                    # [B, D]
 
-            v_pooled = v_pooled / v_pooled.norm(dim=-1, keepdim=True)
             v_feat = v_feat / v_feat.norm(dim=-1, keepdim=True)
-            prob_video = self.probabilistic_video(v_pooled, v_feat)
+            f_feat = f_feat / f_feat.norm(dim=-1, keepdim=True)
+            prob_video = self.probabilistic_video(v_feat, f_feat)
             prob_video_embedding = prob_video['embeddings']         # [B, K, D]
             prob_video_sigma = prob_video['sigma']                  # [B, D]
 
             kl_loss = self.loss_kl(prob_video_embedding, prob_video_sigma, prob_text_embedding, prob_text_sigma)
 
             # Try a self.n_text_samples != self.n_video_samples example
-            dis_matrix = self.Distance_Module(prob_text_embedding, prob_video_embedding)
+            dis_matrix = self.distance_module(prob_text_embedding, prob_video_embedding)
 
-            inter_dis_loss, _ = self.Inter_Module(dis_matrix)
+            inter_dis_loss, _ = self.inter_module(dis_matrix)
 
             return sim_matrix, dis_matrix, self.alpha * (intra_sim_loss + inter_dis_loss) + self.beta * kl_loss
         else:
-            return t_feat, v_feat
+            return s_feat, f_feat
 
-    def get_similarity_logits(self, t_feat, v_feat):
-        v_pooled = self.video_transformer(t_feat, v_feat)
-        sim_matrix = sim_matrix_training(t_feat, v_pooled)
-        intra_sim_loss, intra_sim_u = self.Intra_Module(sim_matrix)
+    def get_similarity_logits(self, s_feat, f_feat):
+        v_feat = self.video_transformer(s_feat, f_feat)
+        sim_matrix = sim_matrix_training(s_feat, v_feat)
+        intra_sim_loss, intra_sim_u = self.intra_module(sim_matrix)
 
-        t_feat = t_feat / t_feat.norm(dim=-1, keepdim=True)
-        prob_text = self.probabilistic_text(t_feat, t_feat.unsqueeze(1))
-        prob_text_embedding = prob_text['embeddings']    # [B, K, D]
+        s_feat = s_feat / s_feat.norm(dim=-1, keepdim=True)
+        prob_text = self.probabilistic_text(s_feat, s_feat.unsqueeze(1))
+        prob_text_embedding = prob_text['embeddings']
 
-        v_pooled = v_pooled / v_pooled.norm(dim=-1, keepdim=True)
+        """ s_feat = s_feat / s_feat.norm(dim=-1, keepdim=True)
+            w_feat = w_feat / w_feat.norm(dim=-1, keepdim=True)
+            prob_text = self.probabilistic_text(s_feat, w_feat)
+            prob_text_embedding = prob_text['embeddings'] # \in [B, K, D] """
+
         v_feat = v_feat / v_feat.norm(dim=-1, keepdim=True)
-        prob_video = self.probabilistic_video(v_pooled, v_feat)
-        prob_video_embedding = prob_video['embeddings']  # [B, K, D]
+        f_feat = f_feat / f_feat.norm(dim=-1, keepdim=True)
+        prob_video = self.probabilistic_video(v_feat, f_feat)
+        prob_video_embedding = prob_video['embeddings']   # \in [B, K, D]
 
-        dis_matrix = self.Distance_Module(prob_text_embedding, prob_video_embedding)
+        dis_matrix = self.distance_module(prob_text_embedding, prob_video_embedding)
+        inter_dis_loss, inter_dis_u = self.inter_module(dis_matrix)
 
-        inter_dis_loss, inter_dis_u = self.Inter_Module(dis_matrix)
-
-        # sim_matrix = sim_matrix
-        # sim_matrix = (1 - dis_matrix) * sim_matrix
+        """ Maybe you can use more methods!!!
+            sim_matrix = sim_matrix
+            sim_matrix = (1 - dis_matrix) * sim_matrix """
         sim_matrix = ((1 - dis_matrix) * torch.exp(-0.1 * inter_dis_u)) * (torch.exp(-0.1 * intra_sim_u.T) * sim_matrix)
 
         return sim_matrix

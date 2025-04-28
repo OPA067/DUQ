@@ -69,10 +69,11 @@ def main():
                       tokenizer=tokenizer)
 
     # path of model
-    model_path = "./experiments/MSRVTT-train/2024_12_19_04_11_40/"
-    checkpont_list = ["checkpoint-epoch1.pth", "checkpoint-epoch2.pth", "checkpoint-epoch3.pth", "checkpoint-epoch4.pth", "checkpoint-epoch5.pth", "model_best.pth"]
-    for checkpont in checkpont_list:
-        trainer.load_checkpoint(model_path + checkpont)
+    model_path = "./experiments/MSRVTT-train/xxxxxxx/"
+    checkpoint_list = ["checkpoint-epoch1.pth", "checkpoint-epoch2.pth", "checkpoint-epoch3.pth", "checkpoint-epoch4.pth", "checkpoint-epoch5.pth", "model_best.pth"]
+    for checkpoint in checkpoint_list:
+        # load trained weight files.
+        trainer.load_checkpoint(model_path + checkpoint)
         trainer.validate()
 
 if __name__ == '__main__':

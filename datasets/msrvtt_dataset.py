@@ -7,7 +7,6 @@ from torch.utils.data import Dataset
 from config.base_config import Config
 from datasets.video_capture import VideoCapture
 
-
 class MSRVTTDataset(Dataset):
 
     def __init__(self, config: Config, split_type='train', img_transforms=None):

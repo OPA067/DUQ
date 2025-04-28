@@ -31,9 +31,9 @@ class MultiHeadSelfAttention(nn.Module):
             output = output.squeeze(1)
         return output, attn
 
-class LFA_Net(nn.Module):
+class lfa_module(nn.Module):
     def __init__(self, n_embeds, d_in, d_out, d_h, dropout=0.0):
-        super(LFA_Net, self).__init__()
+        super(lfa_module, self).__init__()
 
         self.num_embeds = n_embeds
         self.attention = MultiHeadSelfAttention(n_embeds, d_in, d_h)

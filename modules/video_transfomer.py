@@ -21,6 +21,12 @@ class video_transformer(nn.Module):
         self.layer_norm3 = nn.LayerNorm(self.embed_dim)
         self.dropout = nn.Dropout(dropout)
 
+        self.MLP = nn.Sequential(
+            nn.Linear(self.embed_dim, self.embed_dim * 2),
+            nn.ReLU(),
+            nn.Linear(self.embed_dim * 2, 1),
+        )
+
         self._init_parameters()
 
     def _init_parameters(self):
@@ -32,9 +38,24 @@ class video_transformer(nn.Module):
                     param.data.fill_(0.)
 
     def forward(self, text_embeds, video_embeds):
+        """ text_embeds: [batch_size, embed_dim]
+            video_embeds: [batch_size, frame_len, embed_dim]
+            Here we add other video frame level feature pooling methods."""
+        """ 1) Mean: 
+            video_embeds = torch.mean(video_embeds, dim=1)
+            return video_embeds"""
+        """ 2) MLP:
+            video_weights = self.MLP(video_embeds).squeeze(-1)
+            video_embeds = torch.einsum("afd,af->ad", [video_embeds, video_weights])
+            return video_embeds"""
+        """ 3) Self-Attention:"""
+
+        """ 4) Cross-Attention:"""
+        # nn.LayerNorm
         text_embeds = self.layer_norm1(text_embeds)
         video_embeds = self.layer_norm1(video_embeds)
 
+        # nn.Linear, Q = t \in [B, D] and K,V = v \in [B, F, D]
         q = self.q_proj(text_embeds)
         k = self.k_proj(video_embeds)
         v = self.v_proj(video_embeds)
@@ -44,11 +65,13 @@ class video_transformer(nn.Module):
         attention_logits = torch.matmul(q, k)
         attention_logits = attention_logits / math.sqrt(self.embed_dim)
 
+        # Attention weights
         attention_weights = F.softmax(attention_logits, dim=2)
 
         attention = torch.matmul(attention_weights, v)
         attention = attention.squeeze(1)
 
+        # Attention
         attention = self.out_proj(attention)
 
         attn_out = self.layer_norm2(attention)
@@ -56,4 +79,5 @@ class video_transformer(nn.Module):
         out = attn_out + self.dropout(linear_out)
         out = self.layer_norm3(out)
 
+        # video features output \in [B, D]
         return out

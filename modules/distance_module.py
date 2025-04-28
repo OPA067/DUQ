@@ -3,9 +3,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 from config.base_config import Config
 
-class Distance_Module(nn.Module):
+class distance_module(nn.Module):
     def __init__(self, config: Config):
-        super(Distance_Module, self).__init__()
+        super(distance_module, self).__init__()
         self.batch_size = config.batch_size
         self.embed_dim = config.embed_dim
         self.num_frames = config.num_frames

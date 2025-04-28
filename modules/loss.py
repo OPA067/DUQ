@@ -4,6 +4,7 @@ import torch
 import torch.nn.functional as F
 from config.base_config import Config
 
+### InfoNCE loss
 class CLIPLoss(nn.Module):
     def __init__(self):
         super().__init__()
@@ -23,6 +24,7 @@ class CLIPLoss(nn.Module):
 
         return (t2v_loss + v2t_loss) / 2.0
 
+### KL divergence loss
 class KLdivergence(nn.Module):
     def __init__(self):
         super(KLdivergence, self).__init__()

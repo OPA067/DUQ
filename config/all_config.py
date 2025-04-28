@@ -57,10 +57,11 @@ class AllConfig(Config):
         parser.add_argument('--input_res', type=int, default=224)
         parser.add_argument('--split', type=int, default=10)
 
-        parser.add_argument('--n_text_samples', type=int, default=7)
-        parser.add_argument('--n_video_samples', type=int, default=7)
-        parser.add_argument('--alpha', type=float, default=1e-1)
-        parser.add_argument('--beta', type=float, default=1e-4)
+        # hyper parameters
+        parser.add_argument('--n_text_samples', type=int, default=7, help="number of text samples K")
+        parser.add_argument('--n_video_samples', type=int, default=7, help="number of video samples K")
+        parser.add_argument('--alpha', type=float, default=1e-1, help="loss hyper-parameter")
+        parser.add_argument('--beta', type=float, default=1e-4, help="loss hyper-parameter")
 
         # experiment parameters
         parser.add_argument('--exp_name', type=str, required=True, help="Name of the current experiment")
@@ -69,7 +70,7 @@ class AllConfig(Config):
         parser.add_argument('--log_step', type=int, default=1, help="Print training log every n steps")
         parser.add_argument('--evals_per_epoch', type=int, default=1, help="Number of times to evaluate per epoch")
         parser.add_argument('--load_epoch', type=int, help="Epoch to load from exp_name, or -1 to load model_best.pth")
-        parser.add_argument('--metric', type=str, default='t2v', help="'t2v'/'v2t'")
+        parser.add_argument('--metric', type=str, default='t2v&v2t', help="'t2v'/'v2t'")
 
         # model parameters
         # parser.add_argument('--huggingface', action='store_true', default=False)
@@ -96,6 +97,7 @@ class AllConfig(Config):
 
         # system parameters
         parser.add_argument('--num_workers', type=int, default=8)
+        '''we can set random seed \in [1, 24, 1234, 2024, 2025,...] '''
         parser.add_argument('--seed', type=int, default=24, help='Random seed')
         parser.add_argument('--no_tensorboard', action='store_true', default=False)
         parser.add_argument('--tb_log_dir', type=str, default='tb_logs_dir')

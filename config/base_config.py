@@ -1,6 +1,5 @@
 from abc import abstractmethod, ABC
 
-
 class Config(ABC):
     def __init__(self):
         args = self.parse_args()

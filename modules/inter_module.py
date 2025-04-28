@@ -3,9 +3,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 from config.base_config import Config
 
-class Inter_Modele(nn.Module):
+class inter_module(nn.Module):
     def __init__(self, config: Config):
-        super(Inter_Modele, self).__init__()
+        super(inter_module, self).__init__()
         self.batch_size = config.batch_size
         self.embed_dim = config.embed_dim
         self.num_frames = config.num_frames

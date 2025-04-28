@@ -4,11 +4,10 @@ import torch
 import numpy as np
 from tqdm import tqdm
 from config.all_config import gen_log
-import torch.nn.functional as F
 from config.base_config import Config
 from collections import defaultdict, deque
 from trainer.base_trainer import BaseTrainer
-from modules.metrics import sim_matrix_training, np_softmax, generate_embeds_per_video_id, sim_matrix_inference, sim_matrix_inference_light_allops
+from modules.metrics import np_softmax
 
 class Trainer(BaseTrainer):
 
@@ -58,12 +57,7 @@ class Trainer(BaseTrainer):
             sim_matrix, dis_matrix, loss = self.model(data, is_train=True)
 
             sim_loss = self.loss(sim_matrix, self.model.clip.logit_scale)
-
-            t2v_log_dm = F.softmax(dis_matrix, dim=1)
-            t2v_loss = torch.diag(t2v_log_dm).mean()
-            v2t_log_dm = F.softmax(dis_matrix, dim=0)
-            v2t_loss = torch.diag(v2t_log_dm).mean()
-            dis_loss = (t2v_loss + v2t_loss) / 2.0
+            dis_loss = - self.loss(dis_matrix, self.model.clip.logit_scale)
 
             loss_all = sim_loss + dis_loss + loss
 
@@ -125,11 +119,9 @@ class Trainer(BaseTrainer):
     def _valid_epoch_step(self, epoch, step, num_steps):
 
         self.model.eval()
-        text_embed_arr = []
-        vid_embed_arr = []
+        s_embed_arr, w_embed_arr, f_embed_arr = [], [], []
 
         start_selection_time = time.time()
-
         with torch.no_grad():
             for idx, data in tqdm(enumerate(self.test_data_loader)):
                 if self.tokenizer is not None:
@@ -140,28 +132,30 @@ class Trainer(BaseTrainer):
                     data['text'] = {key: val.to(self.device) for key, val in data['text'].items()}
                 data['video'] = data['video'].to(self.device)
 
-                t_feat, v_feat = self.model(data, is_train=False)
-                text_embed_arr.append(t_feat)
-                vid_embed_arr.append(v_feat)
+                s_feat, f_feat = self.model(data, is_train=False)
+                # s_feat, w_feat, f_feat = self.model(data, is_train=False)
+                # w_embed_arr.append(s_feat)
+                s_embed_arr.append(s_feat)
+                f_embed_arr.append(f_feat)
 
-            text_embeds = torch.cat(text_embed_arr, dim=0)
-            vid_embeds = torch.cat(vid_embed_arr, dim=0)
+            s_embed_arr = torch.cat(s_embed_arr, dim=0)
+            f_embed_arr = torch.cat(f_embed_arr, dim=0)
 
-            batch_t_feat = torch.split(text_embeds, self.split_batch)
-            batch_v_feat = torch.split(vid_embeds, self.split_batch)
+            batch_s_feat = torch.split(s_embed_arr, self.split_batch)
+            batch_f_feat = torch.split(f_embed_arr, self.split_batch)
             sim_matrix = []
-            for idx1, t_feat in tqdm(enumerate(batch_t_feat)):
+            for idx1, s_feat in tqdm(enumerate(batch_s_feat)):
                 each_row = []
-                for idx2, v_feat in enumerate(batch_v_feat):
-                    logits = self.model.get_similarity_logits(t_feat, v_feat)
+                for idx2, f_feat in enumerate(batch_f_feat):
+                    logits = self.model.get_similarity_logits(s_feat, f_feat)
                     logits = logits.cpu().detach().numpy()
                     each_row.append(logits)
                 each_row = np.concatenate(tuple(each_row), axis=-1)
                 sim_matrix.append(each_row)
             sim_matrix = np.concatenate(tuple(sim_matrix), axis=0)
 
-            del text_embeds, vid_embeds
-            gc.collect()
+            # del batch_s_feat, batch_f_feat
+            # gc.collect()
 
             if self.config.DSL:
                 sims_t2v = sim_matrix * np_softmax(np.expand_dims(sim_matrix, axis=1) * 100, axis=0)

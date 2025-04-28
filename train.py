@@ -34,7 +34,7 @@ def main():
         if not torch.cuda.is_available():
             raise Exception('NO GPU!')
 
-    # add log
+    # add log, which includes log_train & log_test.
     msg = f'model pth = {config.model_path}'
     gen_log(model_path=config.model_path, log_name='log_train', msg=msg)
     msg = f'\nconfig={config.__dict__}\n'
@@ -62,7 +62,7 @@ def main():
     test_data_loader = DataFactory.get_data_loader(config, split_type='test')
     model = ModelFactory.get_model(config)
 
-    # optim
+    # optimizer
     params_optimizer = list(model.named_parameters())
     clip_params = [p for n, p in params_optimizer if "clip." in n]
     noclip_params = [p for n, p in params_optimizer if "clip." not in n]
