@@ -2,16 +2,23 @@
   
 # 🔥 DUQ:Dual Uncertainty Quantification for Text-Video Retrieval
 
+Our paper [DUQ:Dual Uncertainty Quantification for Text-Video Retrieval](https://pan.baidu.com/s/1Ke--wOoGcwsDr_zgYQcMEQ?pwd=c4ym) has been accepted by IJCAI 2025. In this paper, we propose a novel Dual Uncertainty Quantification (DUQ) model that separately handles uncertainties in intra-pair interaction and inter-pair exclusion. 
+Specifically, to enhance intra-pair interaction, we propose an intra-pair similarity uncertainty module to provide similarity-based trustworthy predictions and explicitly model this uncertainty. 
+To increase inter-pair exclusion, we propose an inter-pair distance uncertainty module to construct a distance-based diversity probability embeding, thereby widening the gap between similar features. 
+The two components work synergistically, jointly improving the calculation of similarity between features.
+
 
 ## 📣 Updates
 * **[2025/01/18]**: We have released the complete training and testing code.
 * **[2025/01/21]**: We have released the complete video Q&A code.
 * **[2025/04/28]**: We have updated some of the details.
+* **[2025/04/29]**: ⚡ Our paper has been accepted by IJCAI 2025!
 
-## ⚡ Framework
-
-## 😍 Visualization
-
+## 😍 Framework
+(1) The Feature Extraction Module maps text and video inputs into a joint embedding space to compute similarity. 
+(2) The Intra-pair Similarity Uncertainty Module provides similarity-based trustworthy predictions and explicitly models intra-pair interaction uncertainty. 
+(3) The Inter-pair Distance Uncertainty Module constructs distance-based diversity probabilistic embeddings and uses boundary distances to represent inter-pair exclusion differences.
+<img src="Figures/Framework.png" width="800px" />
 ## 🚀 Quick Start
 ### Setup
 
@@ -49,7 +56,7 @@ Download ViT-B/16 Model:  [ViT-B/16](https://huggingface.co/openai/clip-vit-base
 The training instructions for all datasets are given below, where "--split" needs to be specified according to the dataset size.
 ##### MSRVTT
 ```python
-python train.py --exp_name=MSRVTT-train --dataset_name=MSRVTT --log_step=100 --evals_per_epoch=5 --batch_size=32 --videos_dir=MSRVTT/videos/ --split=8
+python train.py --exp_name=MSRVTT-train --dataset_name=MSVD --log_step=1 --evals_per_epoch=5 --batch_size=8 --videos_dir=MSVD/videos/ --split=10
 ```
 
 #### 💪 Example of Text-Video Retrieval Testing
