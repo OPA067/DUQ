@@ -129,16 +129,16 @@ class DUQ(nn.Module):
         self.prob_video = prob_embed(self.embed_dim, self.embed_dim, self.embed_dim * 2)
 
         self.prob_t_w = nn.Sequential(
-            nn.Linear(self.embed_dim, self.embed_dim),
+            nn.Linear(self.embed_dim, self.embed_dim * 2),
             nn.ReLU(),
-            nn.Linear(self.embed_dim * 2, self.embed_dim * 2),
+            nn.Linear(self.embed_dim * 2, self.embed_dim),
             nn.ReLU(),
             nn.Linear(self.embed_dim, 1),
         )
         self.prob_v_w = nn.Sequential(
-            nn.Linear(self.embed_dim, self.embed_dim),
+            nn.Linear(self.embed_dim, self.embed_dim * 2),
             nn.ReLU(),
-            nn.Linear(self.embed_dim * 2, self.embed_dim * 2),
+            nn.Linear(self.embed_dim * 2, self.embed_dim),
             nn.ReLU(),
             nn.Linear(self.embed_dim, 1),
         )
