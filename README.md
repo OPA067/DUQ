@@ -1,6 +1,6 @@
 <div align="left">
 
-# DUQ: Dual Uncertainty Quantification for Text-Video Retrieval
+# Dual Uncertainty Quantification for Text-Video Retrieval
 
 Our paper ```DUQ:Dual Uncertainty Quantification for Text-Video Retrieval``` has been accepted by IJCAI 2025. In this paper, we propose a novel Dual Uncertainty Quantification (DUQ) model that separately handles uncertainties in intra-pair interaction and inter-pair exclusion. 
 Specifically, to enhance intra-pair interaction, we propose an intra-pair similarity uncertainty module to provide similarity-based trustworthy predictions and explicitly model this uncertainty. 
@@ -14,8 +14,10 @@ The two components work synergistically, jointly improving the calculation of si
 * **[2025/06/01]**: We have updated some code details.
 
 ## 😍 Motivation & Framework
-<img src="figures/Motivation.png" width="800px" />
-<img src="figures/Framework.png" width="800px" />
+<p float="left">
+  <img src="figures/Motivation.png" width="47%" />
+  <img src="figures/Framework.png" width="49%" />
+</p>
 
 ## 🚀 Quick Start
 ### Setup
@@ -51,7 +53,7 @@ wget https://openaipublic.azureedge.net/clip/models/40d365715913c9da98579312b702
 
 </div>
 
-#### Train retrival model:
+#### Train retrieval model:
 ```shell
 CUDA_VISIBLE_DEVICES=0 \
 python -m torch.distributed.launch \
@@ -75,7 +77,7 @@ main_retrieval.py \
 --split_batch 8 \
 --output_dir experiments/MSRVTT
 ```
-#### Test retrival model:
+#### Test retrieval model:
 ```shell
 CUDA_VISIBLE_DEVICES=0 \
 python -m torch.distributed.launch \
@@ -107,4 +109,3 @@ and for more details, you can refer to [script](https://github.com/OPA067/DUQ/tr
 
 ## 🎗️ Acknowledgments
 Our code is based on [CLIP4Clip](https://github.com/ArrowLuo/CLIP4Clip/), [X-Pool](https://github.com/layer6ai-labs/xpool) and [HBI](https://github.com/jpthu17/HBI/tree/main). We sincerely appreciate for their contributions.
-
