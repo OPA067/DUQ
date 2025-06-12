@@ -6,7 +6,7 @@ main_retrieval.py \
 --do_eval 1 \
 --workers 8 \
 --n_display 100 \
---epochs 5 \
+--epochs 20 \
 --lr 1e-4 \
 --coef_lr 1e-3 \
 --batch_size 32 \
@@ -19,5 +19,5 @@ main_retrieval.py \
 --video_framerate 1 \
 --split_batch 8 \
 --output_dir experiments/MSRVTT \
---init_model experiments/MSRVTT/2025-06-07_12:23:57/pytorch_model.bin.4
+--init_model experiments/MSRVTT/2025-01-07_12:23:57/pytorch_model.bin.4
 

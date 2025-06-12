@@ -118,6 +118,13 @@ class DUQ(nn.Module):
         self.embed_dim = state_dict["text_projection"].shape[1]
 
         self.frame_transformer = frame_transformer(embed_dim=self.embed_dim, dropout=0.3)
+        self.f_feat_w = nn.Sequential(
+            nn.Linear(self.embed_dim, self.embed_dim * 2),
+            nn.ReLU(),
+            nn.Linear(self.embed_dim * 2, self.embed_dim),
+            nn.ReLU(),
+            nn.Linear(self.embed_dim, 1),
+        )
 
         self.uncertainty = uncertainty_module()
 
@@ -125,17 +132,17 @@ class DUQ(nn.Module):
         self.local_merge_text = local_merge(1, self.embed_dim, self.embed_dim, self.embed_dim * 2)
         self.local_merge_video = local_merge(1, self.embed_dim, self.embed_dim, self.embed_dim * 2)
 
-        self.prob_text = prob_embed(self.embed_dim, self.embed_dim, self.embed_dim * 2)
-        self.prob_video = prob_embed(self.embed_dim, self.embed_dim, self.embed_dim * 2)
+        self.text_prob = prob_embed(self.embed_dim, self.embed_dim, self.embed_dim * 2)
+        self.video_prob = prob_embed(self.embed_dim, self.embed_dim, self.embed_dim * 2)
 
-        self.prob_t_w = nn.Sequential(
+        self.t_prob_w = nn.Sequential(
             nn.Linear(self.embed_dim, self.embed_dim * 2),
             nn.ReLU(),
             nn.Linear(self.embed_dim * 2, self.embed_dim),
             nn.ReLU(),
             nn.Linear(self.embed_dim, 1),
         )
-        self.prob_v_w = nn.Sequential(
+        self.v_prob_w = nn.Sequential(
             nn.Linear(self.embed_dim, self.embed_dim * 2),
             nn.ReLU(),
             nn.Linear(self.embed_dim * 2, self.embed_dim),
@@ -191,44 +198,44 @@ class DUQ(nn.Module):
             loss = 0.
 
             # Step-I, feat-level
-            v_feat = self.frame_transformer(s_feat, f_feat)
+            f_feat_w = self.f_feat_w(f_feat).squeeze(-1)
+            v_feat = torch.einsum("afd,af->ad", [f_feat, f_feat_w])
             s_feat = s_feat / s_feat.norm(dim=-1, keepdim=True)
             v_feat = v_feat / v_feat.norm(dim=-1, keepdim=True)
-            feat_sims = self.sim_matrix_training(s_feat, v_feat, pooling_type="transformers")
+            feat_sims = self.sim_matrix_training(s_feat, v_feat, pooling_type="avg")
             feat_sims_loss = self.loss_fct(feat_sims * logit_scale) + self.loss_fct(feat_sims.T * logit_scale)
             feat_sims_u_loss, feat_sims_u = self.uncertainty(feat_sims)
 
             # Step-II, prob-level
             s_feat = s_feat / s_feat.norm(dim=-1, keepdim=True)
             w_feat = w_feat / w_feat.norm(dim=-1, keepdim=True)
-            prob_text = self.create_prob_text(s_feat, w_feat)
-            prob_text_mu, prob_text_sigma = prob_text['mu'], prob_text['sigma']
-            prob_text_embeds = prob_text['embeds']
+            text_prob = self.create_prob_text(s_feat, w_feat)
+            text_prob_mu, text_prob_sigma = text_prob['mu'], text_prob['sigma']
+            text_prob_embeds = text_prob['embeds']
 
-            v_feat = v_feat.diagonal(dim1=0, dim2=1).transpose(0, 1)
             v_feat = v_feat / v_feat.norm(dim=-1, keepdim=True)
             f_feat = f_feat / f_feat.norm(dim=-1, keepdim=True)
-            prob_video = self.create_prob_video(v_feat, f_feat)
-            prob_video_mu, prob_video_sigma = prob_video['mu'], prob_video['sigma']
-            prob_video_embeds = prob_video['embeds']
+            video_prob = self.create_prob_video(v_feat, f_feat)
+            video_prob_mu, video_prob_sigma = video_prob['mu'], video_prob['sigma']
+            video_prob_embeds = video_prob['embeds']
 
-            prob_text_embeds = prob_text_embeds / prob_text_embeds.norm(dim=-1, keepdim=True)
-            prob_video_embeds = prob_video_embeds / prob_video_embeds.norm(dim=-1, keepdim=True)
-            prob_sims = torch.einsum('amd,bnd->abmn', [prob_text_embeds, prob_video_embeds])
+            text_prob_embeds = text_prob_embeds / text_prob_embeds.norm(dim=-1, keepdim=True)
+            video_prob_embeds = video_prob_embeds / video_prob_embeds.norm(dim=-1, keepdim=True)
+            prob_sims = torch.einsum('amd,bnd->abmn', [text_prob_embeds, video_prob_embeds])
 
-            prob_t_w = self.prob_t_w(prob_text_embeds).squeeze(-1)
-            prob_v_w = self.prob_v_w(prob_video_embeds).squeeze(-1)
+            t_prob_w = self.t_prob_w(text_prob_embeds).squeeze(-1)
+            v_prob_w = self.v_prob_w(video_prob_embeds).squeeze(-1)
 
             t2v_prob_sims, _ = prob_sims.max(dim=-1)
-            t2v_prob_sims = torch.einsum('abm,bm->ab', [t2v_prob_sims, prob_t_w])
+            t2v_prob_sims = torch.einsum('abm,bm->ab', [t2v_prob_sims, t_prob_w])
             v2t_prob_sims, _ = prob_sims.max(dim=-2)
-            v2t_prob_sims = torch.einsum('abn,bn->ab', [v2t_prob_sims, prob_v_w])
+            v2t_prob_sims = torch.einsum('abn,bn->ab', [v2t_prob_sims, v_prob_w])
             prob_sims = (t2v_prob_sims + v2t_prob_sims) / 2.0
 
             prob_sims_loss = self.loss_fct(prob_sims * logit_scale) + self.loss_fct(prob_sims.T * logit_scale)
             prob_sims_u_loss, prob_sims_u = self.uncertainty(prob_sims)
 
-            kl_loss = self.loss_kl(prob_video_embeds, prob_video_sigma, prob_text_embeds, prob_text_sigma)
+            kl_loss = self.loss_kl(video_prob_embeds, video_prob_sigma, text_prob_embeds, text_prob_sigma)
 
             loss = loss + feat_sims_loss + prob_sims_loss + self.alpha * (feat_sims_u_loss + prob_sims_u_loss) + self.beta * kl_loss
 
@@ -239,7 +246,7 @@ class DUQ(nn.Module):
     def create_prob_text(self, s_feat, w_feat):
         output = {}
         out = self.local_merge_text(s_feat, w_feat)
-        uncertain_out = self.prob_text(s_feat, w_feat, out)
+        uncertain_out = self.text_prob(s_feat, w_feat, out)
 
         output['mu'],  output['sigma'] = uncertain_out['mu'], uncertain_out['sigma']
         output['embeds'] = sample_gaussian_tensors(output['mu'], output['sigma'], self.n_text_samples)
@@ -249,7 +256,7 @@ class DUQ(nn.Module):
     def create_prob_video(self, v_feat, f_feat):
         output = {}
         out = self.local_merge_video(v_feat, f_feat)
-        uncertain_out = self.prob_video(v_feat, f_feat, out)
+        uncertain_out = self.video_prob(v_feat, f_feat, out)
 
         output['mu'],  output['sigma'] = uncertain_out['mu'], uncertain_out['sigma']
         output['embeds'] = sample_gaussian_tensors(output['mu'], output['sigma'], self.n_video_samples)
@@ -330,47 +337,46 @@ class DUQ(nn.Module):
         loss = 0.
 
         # Step-I, feat-level
-        v_feat = self.frame_transformer(s_feat, f_feat)
+        f_feat_w = self.f_feat_w(f_feat).squeeze(-1)
+        v_feat = torch.einsum("afd,af->ad", [f_feat, f_feat_w])
         s_feat = s_feat / s_feat.norm(dim=-1, keepdim=True)
         v_feat = v_feat / v_feat.norm(dim=-1, keepdim=True)
-        feat_sims = self.sim_matrix_training(s_feat, v_feat, pooling_type="transformers")
+        feat_sims = self.sim_matrix_training(s_feat, v_feat, pooling_type="avg")
         feat_sims_loss = self.loss_fct(feat_sims * logit_scale) + self.loss_fct(feat_sims.T * logit_scale)
         feat_sims_u_loss, feat_sims_u = self.uncertainty(feat_sims)
 
         # Step-II, prob-level
         s_feat = s_feat / s_feat.norm(dim=-1, keepdim=True)
         w_feat = w_feat / w_feat.norm(dim=-1, keepdim=True)
-        prob_text = self.create_prob_text(s_feat, w_feat)
-        prob_text_mu, prob_text_sigma = prob_text['mu'], prob_text['sigma']
-        prob_text_embeds = prob_text['embeds']
+        text_prob = self.create_prob_text(s_feat, w_feat)
+        text_prob_mu, text_prob_sigma = text_prob['mu'], text_prob['sigma']
+        text_prob_embeds = text_prob['embeds']
 
-        v_feat = v_feat.diagonal(dim1=0, dim2=1).transpose(0, 1)
         v_feat = v_feat / v_feat.norm(dim=-1, keepdim=True)
         f_feat = f_feat / f_feat.norm(dim=-1, keepdim=True)
-        prob_video = self.create_prob_video(v_feat, f_feat)
-        prob_video_mu, prob_video_sigma = prob_video['mu'], prob_video['sigma']
-        prob_video_embeds = prob_video['embeds']
+        video_prob = self.create_prob_video(v_feat, f_feat)
+        video_prob_mu, video_prob_sigma = video_prob['mu'], video_prob['sigma']
+        video_prob_embeds = video_prob['embeds']
 
-        prob_text_embeds = prob_text_embeds / prob_text_embeds.norm(dim=-1, keepdim=True)
-        prob_video_embeds = prob_video_embeds / prob_video_embeds.norm(dim=-1, keepdim=True)
-        prob_sims = torch.einsum('amd,bnd->abmn', [prob_text_embeds, prob_video_embeds])
+        text_prob_embeds = text_prob_embeds / text_prob_embeds.norm(dim=-1, keepdim=True)
+        video_prob_embeds = video_prob_embeds / video_prob_embeds.norm(dim=-1, keepdim=True)
+        prob_sims = torch.einsum('amd,bnd->abmn', [text_prob_embeds, video_prob_embeds])
 
-        prob_t_w = self.prob_t_w(prob_text_embeds).squeeze(-1)
-        prob_v_w = self.prob_v_w(prob_video_embeds).squeeze(-1)
+        t_prob_w = self.t_prob_w(text_prob_embeds).squeeze(-1)
+        v_prob_w = self.v_prob_w(video_prob_embeds).squeeze(-1)
 
         t2v_prob_sims, _ = prob_sims.max(dim=-1)
-        t2v_prob_sims = torch.einsum('abm,bm->ab', [t2v_prob_sims, prob_t_w])
+        t2v_prob_sims = torch.einsum('abm,bm->ab', [t2v_prob_sims, t_prob_w])
         v2t_prob_sims, _ = prob_sims.max(dim=-2)
-        v2t_prob_sims = torch.einsum('abn,bn->ab', [v2t_prob_sims, prob_v_w])
+        v2t_prob_sims = torch.einsum('abn,bn->ab', [v2t_prob_sims, v_prob_w])
         prob_sims = (t2v_prob_sims + v2t_prob_sims) / 2.0
 
         prob_sims_loss = self.loss_fct(prob_sims * logit_scale) + self.loss_fct(prob_sims.T * logit_scale)
         prob_sims_u_loss, prob_sims_u = self.uncertainty(prob_sims)
 
-        kl_loss = self.loss_kl(prob_video_embeds, prob_video_sigma, prob_text_embeds, prob_text_sigma)
+        kl_loss = self.loss_kl(video_prob_embeds, video_prob_sigma, text_prob_embeds, text_prob_sigma)
 
-        loss = loss + feat_sims_loss + prob_sims_loss + self.alpha * (
-                    feat_sims_u_loss + prob_sims_u_loss) + self.beta * kl_loss
+        loss = loss + feat_sims_loss + prob_sims_loss + self.alpha * (feat_sims_u_loss + prob_sims_u_loss) + self.beta * kl_loss
 
         sims = feat_sims + prob_sims
         return sims, loss

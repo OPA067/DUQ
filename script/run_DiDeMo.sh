@@ -6,7 +6,7 @@ main_retrieval.py \
 --do_train 1 \
 --workers 8 \
 --n_display 100 \
---epochs 5 \
+--epochs 20 \
 --lr 1e-4 \
 --coef_lr 1e-3 \
 --batch_size 32 \

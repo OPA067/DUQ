@@ -3,7 +3,6 @@ from __future__ import division
 from __future__ import unicode_literals
 from __future__ import print_function
 
-import math
 import os
 import time
 import random
@@ -12,7 +11,6 @@ import numpy as np
 from tqdm import tqdm
 import datetime
 from os.path import join, exists
-from PIL import Image
 
 import torch
 

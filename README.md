@@ -1,6 +1,6 @@
 <div align="left">
-  
-# DUQ:Dual Uncertainty Quantification for Text-Video Retrieval
+
+# DUQ: Dual Uncertainty Quantification for Text-Video Retrieval
 
 Our paper ```DUQ:Dual Uncertainty Quantification for Text-Video Retrieval``` has been accepted by IJCAI 2025. In this paper, we propose a novel Dual Uncertainty Quantification (DUQ) model that separately handles uncertainties in intra-pair interaction and inter-pair exclusion. 
 Specifically, to enhance intra-pair interaction, we propose an intra-pair similarity uncertainty module to provide similarity-based trustworthy predictions and explicitly model this uncertainty. 
@@ -10,32 +10,31 @@ The two components work synergistically, jointly improving the calculation of si
 
 ## 📣 Updates
 * **[2025/01/18]**: We have released the complete training and testing code.
-* **[2025/01/21]**: We have released the complete video Q&A code.
-* **[2025/04/28]**: We have updated some of the details.
-* **[2025/04/29]**: ⚡ Our paper has been accepted by IJCAI 2025!
-* **[2025/06/01]**: Fixed a bug that had a minor impact on retrival performance.
+* **[2025/04/29]**: Our paper has been accepted by IJCAI-2025!
+* **[2025/06/01]**: We have updated some code details.
 
-## 😍 Framework
-(1) The Feature Extraction Module maps text and video inputs into a joint embedding space to compute similarity. 
-(2) The Intra-pair Similarity Uncertainty Module provides similarity-based trustworthy predictions and explicitly models intra-pair interaction uncertainty. 
-(3) The Inter-pair Distance Uncertainty Module constructs distance-based diversity probabilistic embeddings and uses boundary distances to represent inter-pair exclusion differences.
+## 😍 Motivation & Framework
+<img src="figures/Motivation.png" width="800px" />
 <img src="figures/Framework.png" width="800px" />
+
 ## 🚀 Quick Start
 ### Setup
 
 #### Setup code environment
 ```shell
-conda create -n DUQ python=3.8
+conda create -n DUQ python=3.9
 conda activate DUQ
 pip install -r requirements.txt
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+pip install torch==1.8.1+cu102 torchvision==0.9.1+cu102 -f https://download.pytorch.org/whl/torch_stable.html
 ```
 
 #### Download CLIP Model
-
-Download ViT-B/32 Model: [ViT-B/32](https://huggingface.co/openai/clip-vit-base-patch32])
-
-Download ViT-B/16 Model:  [ViT-B/16](https://huggingface.co/openai/clip-vit-base-patch16])
+```shell
+cd DUQ/models
+wget https://openaipublic.azureedge.net/clip/models/40d365715913c9da98579312b702a82c18be219cc2a73407c4526f58eba950af/ViT-B-32.pt
+# wget https://openaipublic.azureedge.net/clip/models/5806e77cd80f8b59890b7e101eabd078d9fb84e6937f9e85e4ecb61988df416f/ViT-B-16.pt
+# wget https://openaipublic.azureedge.net/clip/models/b8cca3fd41ae0c99ba7e8951adf17d267cdb84cd88be6f7c2e0eca1737a03836/ViT-L-14.pt
+```
 
 #### Download Datasets
 
@@ -52,17 +51,60 @@ Download ViT-B/16 Model:  [ViT-B/16](https://huggingface.co/openai/clip-vit-base
 
 </div>
 
-#### 💪 Text-Video Retrieval Training
-Training instructions for all datasets can be found [here](https://github.com/OPA067/DUQ/script), where you need to specify "--split" according to the size of the dataset.
-```python
-python train.py --exp_name=MSRVTT-train --dataset_name=MSRVTT --log_step=100 --evals_per_epoch=5 --batch_size=32 --videos_dir=MSRVTT/videos/ --split=8
+#### Train retrival model:
+```shell
+CUDA_VISIBLE_DEVICES=0 \
+python -m torch.distributed.launch \
+--master_port 2502 \
+--nproc_per_node=1 \
+main_retrieval.py \
+--do_train 1 \
+--workers 8 \
+--n_display 100 \
+--epochs 5 \
+--lr 1e-4 \
+--coef_lr 1e-3 \
+--batch_size 32 \
+--batch_size_val 32 \
+--anno_path MSRVTT \
+--video_path MSRVTT/videos \
+--datatype msrvtt \
+--max_words 24 \
+--max_frames 12 \
+--video_framerate 1 \
+--split_batch 8 \
+--output_dir experiments/MSRVTT
 ```
+#### Test retrival model:
+```shell
+CUDA_VISIBLE_DEVICES=0 \
+python -m torch.distributed.launch \
+--master_port 2502 \
+--nproc_per_node=1 \
+main_retrieval.py \
+--do_eval 1 \
+--workers 8 \
+--n_display 100 \
+--epochs 5 \
+--lr 1e-4 \
+--coef_lr 1e-3 \
+--batch_size 32 \
+--batch_size_val 32 \
+--anno_path MSRVTT \
+--video_path MSRVTT/videos \
+--datatype msrvtt \
+--max_words 24 \
+--max_frames 12 \
+--video_framerate 1 \
+--split_batch 8 \
+--output_dir experiments/MSRVTT \
+--init_model experiments/MSRVTT/{OUTPUT_PATH}/pytorch_model.bin.{epoch}
+```
+and for more details, you can refer to [script](https://github.com/OPA067/DUQ/tree/master/script).
 
-#### 💪 Example of Text-Video Retrieval Testing
-```python
-python test.py --exp_name=MSRVTT-test --dataset_name=MSRVTT --batch_size=32 --videos_dir=MSRVTT/videos/
-```
+
+## 💪 Hint
 
 ## 🎗️ Acknowledgments
-Our code is based on [CLIP4Clip](https://github.com/ArrowLuo/CLIP4Clip/), [X-Pool](https://github.com/layer6ai-labs/xpool). We sincerely appreciate for their contributions.
+Our code is based on [CLIP4Clip](https://github.com/ArrowLuo/CLIP4Clip/), [X-Pool](https://github.com/layer6ai-labs/xpool) and [HBI](https://github.com/jpthu17/HBI/tree/main). We sincerely appreciate for their contributions.
 
