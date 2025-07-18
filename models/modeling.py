@@ -227,7 +227,7 @@ class DUQ(nn.Module):
             v_prob_w = self.v_prob_w(video_prob_embeds).squeeze(-1)
 
             t2v_prob_sims, _ = prob_sims.max(dim=-1)
-            t2v_prob_sims = torch.einsum('abm,bm->ab', [t2v_prob_sims, t_prob_w])
+            t2v_prob_sims = torch.einsum('abm,am->ab', [t2v_prob_sims, t_prob_w])
             v2t_prob_sims, _ = prob_sims.max(dim=-2)
             v2t_prob_sims = torch.einsum('abn,bn->ab', [v2t_prob_sims, v_prob_w])
             prob_sims = (t2v_prob_sims + v2t_prob_sims) / 2.0
@@ -366,7 +366,7 @@ class DUQ(nn.Module):
         v_prob_w = self.v_prob_w(video_prob_embeds).squeeze(-1)
 
         t2v_prob_sims, _ = prob_sims.max(dim=-1)
-        t2v_prob_sims = torch.einsum('abm,bm->ab', [t2v_prob_sims, t_prob_w])
+        t2v_prob_sims = torch.einsum('abm,am->ab', [t2v_prob_sims, t_prob_w])
         v2t_prob_sims, _ = prob_sims.max(dim=-2)
         v2t_prob_sims = torch.einsum('abn,bn->ab', [v2t_prob_sims, v_prob_w])
         prob_sims = (t2v_prob_sims + v2t_prob_sims) / 2.0
