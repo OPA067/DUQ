@@ -1,6 +1,6 @@
 <div align="left">
 
-# [IJCAI2025] Dual Uncertainty Quantification for Text-Video Retrieval
+# [IJCAI2025] DUQ: Dual Uncertainty Quantification for Text-Video Retrieval
 
 Our paper ```DUQ:Dual Uncertainty Quantification for Text-Video Retrieval``` has been accepted by IJCAI2025. In this paper, we propose a novel Dual Uncertainty Quantification (DUQ) model that separately handles uncertainties in intra-pair interaction and inter-pair exclusion. 
 Specifically, to enhance intra-pair interaction, we propose an intra-pair similarity uncertainty module to provide similarity-based trustworthy predictions and explicitly model this uncertainty. 
