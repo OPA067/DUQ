@@ -25,6 +25,18 @@ def compute_metrics(x):
     metrics["cols"] = [int(i) for i in list(ind)]
     return metrics
 
+def np_softmax(X, theta=1.0, axis=0):
+    y = np.atleast_2d(X * 100)
+    if axis is None:
+        axis = next(j[0] for j in enumerate(y.shape) if j[1] > 1)
+    y = y * float(theta)
+    y = y - np.expand_dims(np.max(y, axis=axis), axis)
+    y = np.exp(y)
+    ax_sum = np.expand_dims(np.sum(y, axis=axis), axis)
+    p = y / ax_sum
+    if len(X.shape) == 1:
+        p = p.flatten()
+    return p
 
 def print_computed_metrics(metrics):
     r1 = metrics['R1']
@@ -33,8 +45,7 @@ def print_computed_metrics(metrics):
     r50 = metrics['R50']
     mr = metrics['MR']
     meanr = metrics["MeanR"]
-    print('R@1: {:.4f} - R@5: {:.4f} - R@10: {:.4f} - R@50: {:.4f} - Median R: {} - MeanR: {}'.format(r1, r5, r10, r50,
-                                                                                          mr, meanr))
+    print('R@1: {:.4f} - R@5: {:.4f} - R@10: {:.4f} - R@50: {:.4f} - Median R: {} - MeanR: {}'.format(r1, r5, r10, r50, mr, meanr))
 
 
 # below two functions directly come from: https://github.com/Deferf/Experiments

@@ -6,7 +6,7 @@ main_retrieval.py \
 --do_eval 1 \
 --workers 8 \
 --n_display 100 \
---epochs 20 \
+--epochs 5 \
 --lr 1e-4 \
 --coef_lr 1e-3 \
 --batch_size 32 \
@@ -14,10 +14,8 @@ main_retrieval.py \
 --anno_path MSRVTT \
 --video_path MSRVTT/videos \
 --datatype msrvtt \
---max_words 24 \
+--max_words 32 \
 --max_frames 12 \
 --video_framerate 1 \
---split_batch 8 \
 --output_dir experiments/MSRVTT \
---init_model experiments/MSRVTT/2025-01-07_12:23:57/pytorch_model.bin.4
-
+--init_model experiments/MSRVTT/2025-08-05_06:11:25/pytorch_model.bin.0

@@ -1,13 +1,12 @@
 import math
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 class MultiHeadedAttention(nn.Module):
-    def __init__(self, embed_dim, num_mha_heads=1):
+    def __init__(self, embed_dim):
         super(MultiHeadedAttention, self).__init__()
         self.embed_dim = embed_dim
-        self.num_heads = num_mha_heads
+        self.num_heads = 1
         assert self.embed_dim % self.num_heads == 0
         self.head_dim = self.embed_dim // self.num_heads
 
@@ -18,44 +17,47 @@ class MultiHeadedAttention(nn.Module):
 
     def forward(self, s_feat, f_feat):
 
-        num_texts, _ = s_feat.shape
+        a, _ = s_feat.shape
         q = self.q_proj(s_feat)
-        q = q.reshape(num_texts, self.num_heads, self.head_dim)
-        q = q.permute(1, 2, 0)
+        q = q.reshape(a, self.num_heads, self.head_dim)     # [A, H, D//H]
+        q = q.permute(1, 2, 0)                              # [H, D//H, A]
 
-        num_vids, num_frames, _ = f_feat.shape
+        b, f, _ = f_feat.shape
         k = self.k_proj(f_feat)
-        k = k.reshape(num_vids, num_frames, self.num_heads, self.head_dim)
-        k = k.permute(0, 2, 1, 3)
+        k = k.reshape(b, f, self.num_heads, self.head_dim)  # [B, F, H, D//H]
+        k = k.permute(0, 2, 1, 3)                           # [B, H, F, D//H]
 
         v = self.v_proj(f_feat)
-        v = v.reshape(num_vids, num_frames, self.num_heads, self.head_dim)
-        v = v.permute(0, 2, 3, 1)
+        v = v.reshape(b, f, self.num_heads, self.head_dim)  # [B, F, H, D//H]
+        v = v.permute(0, 2, 3, 1)                           # [B, H, D//H, F]
 
-        attention_logits = k @ q
+        attention_logits = k @ q                            # [B, H, F, A]
         attention_logits = attention_logits / math.sqrt(self.head_dim)
         attention_weights = F.softmax(attention_logits, dim=2)
 
-        attention = v @ attention_weights
-        attention = attention.permute(0, 3, 1, 2)
-        attention = attention.reshape(num_vids, num_texts, self.embed_dim)
+        attention = v @ attention_weights                   # [B, H, D//H, A]
+        attention = attention.permute(0, 3, 1, 2)           # [B, A, H, D//H]
+        attention = attention.reshape(b, a, self.embed_dim) # [B, A, D]
 
         o = self.out_proj(attention)
+
         return o
 
-class frame_transformer(nn.Module):
+class CAM(nn.Module):
     def __init__(self, embed_dim, dropout):
-        super(frame_transformer, self).__init__()
+        super(CAM, self).__init__()
         self.embed_dim = embed_dim
+        self.dropout = dropout
 
-        self.cross_attn = MultiHeadedAttention(embed_dim=self.embed_dim, num_mha_heads=1)
+        self.cross_attn = MultiHeadedAttention(embed_dim)
 
         self.linear_proj = nn.Linear(self.embed_dim, self.embed_dim)
 
-        self.layer_norm1 = nn.LayerNorm(self.embed_dim)
-        self.layer_norm2 = nn.LayerNorm(self.embed_dim)
-        self.layer_norm3 = nn.LayerNorm(self.embed_dim)
-        self.dropout = nn.Dropout(dropout)
+        self.ln1 = nn.LayerNorm(self.embed_dim)
+        self.ln2 = nn.LayerNorm(self.embed_dim)
+        self.ln3 = nn.LayerNorm(self.embed_dim)
+        self.ln4 = nn.LayerNorm(self.embed_dim)
+        self.dropout = nn.Dropout(self.dropout)
 
         self._init_parameters()
 
@@ -69,15 +71,14 @@ class frame_transformer(nn.Module):
 
     def forward(self, s_feat, f_feat):
 
-        s_feat = self.layer_norm1(s_feat)
-        f_feat = self.layer_norm1(f_feat)
+        s_feat = self.ln1(s_feat)
+        f_feat = self.ln2(f_feat)
 
         attn_out = self.cross_attn(s_feat, f_feat)
-        attn_out = self.layer_norm2(attn_out)
+        attn_out = self.ln3(attn_out)
 
         linear_out = self.linear_proj(attn_out)
         out = attn_out + self.dropout(linear_out)
-        out = self.layer_norm3(out)
+        out = self.ln4(out)
 
         return out
-

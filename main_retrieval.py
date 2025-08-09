@@ -3,6 +3,7 @@ from __future__ import division
 from __future__ import unicode_literals
 from __future__ import print_function
 
+import math
 import os
 import time
 import random
@@ -11,15 +12,16 @@ import numpy as np
 from tqdm import tqdm
 import datetime
 from os.path import join, exists
+from PIL import Image
 
 import torch
 
 from models.tokenization_clip import SimpleTokenizer as ClipTokenizer
 from dataloaders.data_dataloaders import DATALOADER_DICT
-from models.modeling import AllGather, DUQ
+from models.modeling import AllGather, Model
 from models.optimization import BertAdam
 from utils.metric_logger import MetricLogger
-from utils.metrics import compute_metrics, tensor_text_to_video_metrics, tensor_video_to_text_sim
+from utils.metrics import compute_metrics, tensor_text_to_video_metrics, tensor_video_to_text_sim, np_softmax
 
 from utils.comm import is_main_process, synchronize
 from utils.logger import setup_logger
@@ -71,13 +73,8 @@ def get_args(description='Text-Video Retrieval.'):
     parser.add_argument('--num_hidden_layers', type=int, default=4)
     parser.add_argument("--init_model", type=str, default=None, required=False, help="Initial model.")
     parser.add_argument('--split_batch', type=int, default=32, help='test dataset split')
-
-    parser.add_argument('--n_text_samples', type=int, default=7, help='n_text_samples')
-    parser.add_argument('--n_video_samples', type=int, default=7, help='n_video_samples')
     parser.add_argument('--alpha', type=float, default=0.1, help='hyper-parameters alpha')
     parser.add_argument('--beta', type=float, default=0.0001, help='hyper-parameters beta')
-    parser.add_argument('--gamma', type=float, default=0.0001, help='hyper-parameters gamma')
-
     args = parser.parse_args()
 
     return args
@@ -115,7 +112,7 @@ def set_seed_logger(args):
     return args
 
 def build_model(args):
-    model = DUQ(args)
+    model = Model(args)
     if args.init_model:
         if not exists(args.init_model):
             raise FileNotFoundError
@@ -288,7 +285,7 @@ def train_epoch(epoch, args, model, train_dataloader, device, n_gpu, optimizer, 
     total_loss = total_loss / len(train_dataloader)
     return total_loss, global_step
 
-def _run_on_single_gpu(model, t_mask_list, s_feat_list, w_feat_list, v_mask_list, f_feat_list, p_feat_list, split_batch=8):
+def _run_on_single_gpu(model, t_mask_list, s_feat_list, w_feat_list, v_mask_list, f_feat_list, p_feat_list, split_batch=32):
 
     sim_matrix = []
 
@@ -304,7 +301,7 @@ def _run_on_single_gpu(model, t_mask_list, s_feat_list, w_feat_list, v_mask_list
         for idx1, (t_mask, s_feat, w_feat) in tqdm(enumerate(zip(batch_t_mask, batch_s_feat, batch_w_feat))):
             each_row = []
             for idx2, (v_mask, f_feat, p_feat) in enumerate(zip(batch_v_mask, batch_f_feat, batch_p_feat)):
-                logits, _ = model.get_similarity_logits(t_mask, s_feat, w_feat, v_mask, f_feat, p_feat)
+                logits = model.get_similarity_logits(t_mask, s_feat, w_feat, v_mask, f_feat, p_feat)
                 logits = logits.cpu().detach().numpy()
                 each_row.append(logits)
             each_row = np.concatenate(tuple(each_row), axis=-1)
@@ -413,6 +410,7 @@ def eval_epoch(args, model, test_dataloader, device):
     with torch.no_grad():
         sim_matrix = _run_on_single_gpu(model, batch_mask_t, batch_feat_s, batch_feat_w, batch_mask_v, batch_feat_f, batch_feat_p, args.split_batch)
         sim_matrix = np.concatenate(tuple(sim_matrix), axis=0)
+
     toc2 = time.time()
     if multi_sentence_:
         logger.info("before reshape, sim matrix size: {} x {}".format(sim_matrix.shape[0], sim_matrix.shape[1]))
@@ -437,8 +435,8 @@ def eval_epoch(args, model, test_dataloader, device):
 
     else:
         logger.info("sim matrix size: {}, {}".format(sim_matrix.shape[0], sim_matrix.shape[1]))
-        tv_metrics = compute_metrics(sim_matrix)
-        vt_metrics = compute_metrics(sim_matrix.T)
+        tv_metrics = compute_metrics(np_softmax(sim_matrix))
+        vt_metrics = compute_metrics(np_softmax(sim_matrix.T))
         logger.info('Length-T: {}, Length-V:{}'.format(len(sim_matrix), len(sim_matrix[0])))
         logger.info('[end] compute_metrics')
         toc3 = time.time()
@@ -466,6 +464,7 @@ def main():
     args = set_seed_logger(args)
 
     model = build_model(args)
+    # logger.info(model)
 
     test_dataloader, train_dataloader, train_sampler = build_dataloader(args)
 

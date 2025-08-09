@@ -6,7 +6,7 @@ main_retrieval.py \
 --do_train 1 \
 --workers 8 \
 --n_display 100 \
---epochs 20 \
+--epochs 5 \
 --lr 1e-4 \
 --coef_lr 1e-3 \
 --batch_size 32 \
@@ -14,9 +14,8 @@ main_retrieval.py \
 --anno_path LSMDC \
 --video_path LSMDC \
 --datatype lsmdc \
---max_words 24 \
+--max_words 32 \
 --max_frames 12 \
 --video_framerate 1 \
---split_batch 10 \
 --output_dir experiments/LSMDC
 

@@ -70,8 +70,18 @@ class CrossEn(nn.Module):
         sim_loss = nce_loss.mean()
         return sim_loss
 
+class KL(nn.Module):
+    def __init__(self, config=None):
+        super(KL, self).__init__()
+
+    def forward(self, sim_matrix0, sim_matrix1):
+        logpt0 = F.log_softmax(sim_matrix0, dim=-1)
+        logpt1 = F.softmax(sim_matrix1, dim=-1)
+        kl = F.kl_div(logpt0, logpt1, reduction='mean')
+        return kl
+
 class KLdivergence(nn.Module):
-    def __init__(self):
+    def __init__(self, config=None):
         super(KLdivergence, self).__init__()
 
     def kl_divergence(self, mu, logsigma):

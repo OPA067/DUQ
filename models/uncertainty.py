@@ -2,9 +2,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-class uncertainty_module(nn.Module):
-    def __init__(self,):
-        super(uncertainty_module, self).__init__()
+class UM(nn.Module):
+    def __init__(self, type='relu'):
+        super(UM, self).__init__()
+        self.type = type
 
     def loglikelihood_loss(self, target, alpha, device=None):
         target = target.to(device)
@@ -26,17 +27,9 @@ class uncertainty_module(nn.Module):
     def forward(self, matrix):
 
         target = torch.eye(matrix.shape[0], dtype=matrix.dtype, device=matrix.device)
-        '''
-        [1 0 0 0 
-         0 1 0 0
-         0 0 1 0
-         0 0 0 1]
-        '''
         evidence = F.relu(matrix)
         alpha = evidence + 1
         S = torch.sum(alpha, dim=1, keepdim=True)
         loss = (torch.mean(self.mse_loss(target, alpha)) + torch.mean(self.mse_loss(target, alpha.T))) / 2.0
 
         return loss, 1 - matrix.shape[0] / S
-
-
