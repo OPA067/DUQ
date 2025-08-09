@@ -5,8 +5,7 @@
 Our paper ```DUQ:Dual Uncertainty Quantification for Text-Video Retrieval``` has been accepted by IJCAI2025. In this paper, we propose a novel Dual Uncertainty Quantification (DUQ) model that separately handles uncertainties in intra-pair interaction and inter-pair exclusion. 
 Specifically, to enhance intra-pair interaction, we propose an intra-pair similarity uncertainty module to provide similarity-based trustworthy predictions and explicitly model this uncertainty. 
 To increase inter-pair exclusion, we propose an inter-pair distance uncertainty module to construct a distance-based diversity probability embeding, thereby widening the gap between similar features. 
-The two components work synergistically, jointly improving the calculation of similarity between features. Papers 提供在了[Link][Download](http://ms-multimedia-challenge.com/2017/dataset)
-
+The two components work synergistically, jointly improving the calculation of similarity between features. The paper is available at [Paper](https://github.com/OPA067/DUQ/blob/master/papers/DUQ_Main.pdf).
 
 ## 📣 Updates
 * **[2025/01/18]**: We have released the complete training and testing code.
