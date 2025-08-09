@@ -14,8 +14,8 @@ The two components work synergistically, jointly improving the calculation of si
 
 ## 😍 Motivation & Framework
 <p float="left">
-  <img src="figures/Motivation.png" width="43%" />
-  <img src="figures/Framework.png" width="40%" />
+  <img src="figures/Motivation.png" width="100%" />
+  <img src="figures/Framework.png" width="100%" />
 </p>
 
 ## 🚀 Quick Start
@@ -54,50 +54,48 @@ wget https://openaipublic.azureedge.net/clip/models/40d365715913c9da98579312b702
 
 #### Train retrieval model:
 ```shell
-CUDA_VISIBLE_DEVICES=0 \
+CUDA_VISIBLE_DEVICES=0,1,2,3 \
 python -m torch.distributed.launch \
 --master_port 2502 \
---nproc_per_node=1 \
+--nproc_per_node=4 \
 main_retrieval.py \
 --do_train 1 \
 --workers 8 \
 --n_display 100 \
---epochs 5 \
+--epochs 10 \
 --lr 1e-4 \
 --coef_lr 1e-3 \
---batch_size 32 \
---batch_size_val 32 \
+--batch_size 128 \
+--batch_size_val 128 \
 --anno_path MSRVTT \
 --video_path MSRVTT/videos \
 --datatype msrvtt \
---max_words 24 \
+--max_words 32 \
 --max_frames 12 \
 --video_framerate 1 \
---split_batch 8 \
 --output_dir experiments/MSRVTT
 ```
 #### Test retrieval model:
 ```shell
-CUDA_VISIBLE_DEVICES=0 \
+CUDA_VISIBLE_DEVICES=0,1,2,3 \
 python -m torch.distributed.launch \
 --master_port 2502 \
---nproc_per_node=1 \
+--nproc_per_node=4 \
 main_retrieval.py \
 --do_eval 1 \
 --workers 8 \
 --n_display 100 \
---epochs 5 \
+--epochs 10 \
 --lr 1e-4 \
 --coef_lr 1e-3 \
---batch_size 32 \
---batch_size_val 32 \
+--batch_size 128 \
+--batch_size_val 128 \
 --anno_path MSRVTT \
 --video_path MSRVTT/videos \
 --datatype msrvtt \
---max_words 24 \
+--max_words 32 \
 --max_frames 12 \
 --video_framerate 1 \
---split_batch 8 \
 --output_dir experiments/MSRVTT \
 --init_model experiments/MSRVTT/{OUTPUT_PATH}/pytorch_model.bin.{epoch}
 ```
