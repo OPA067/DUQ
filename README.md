@@ -1,7 +1,7 @@
 <div align="center">
 
-# [IJCAI2025, GuangZhou] 
-# DUQ: Dual Uncertainty Quantification for Text-Video Retrieval
+# IJCAI2025, GuangZhou, DUQ
+# Dual Uncertainty Quantification for Text-Video Retrieval
 
 **Accepted by IJCAI 2025** 🎉
 
