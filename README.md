@@ -1,6 +1,7 @@
 <div align="center">
 
-# [IJCAI2025, GUANGZHOU] DUQ: Dual Uncertainty Quantification for Text-Video Retrieval
+# [IJCAI2025, GuangZhou] 
+# DUQ: Dual Uncertainty Quantification for Text-Video Retrieval
 
 **Accepted by IJCAI 2025** 🎉
 
@@ -151,7 +152,56 @@ CUDA_VISIBLE_DEVICES=0 python -m torch.distributed.launch \
 
 ## 💪 Experiments
 
-see DUQ/experiments
+Training logs and checkpoints are saved under `experiments/<dataset>/<timestamp>/`.
+
+### Log File Format
+
+Each experiment generates a `log.txt` file containing:
+
+**1. Configuration Parameters**
+```
+[2026-09-03 10:42:53 Model 170 INFO]: Effective parameters:
+  <<< agg_module: seqTransf
+  <<< alpha: 0.1
+  <<< base_encoder: ViT-B/32
+  ...
+```
+
+**2. Model Statistics**
+```
+Total params: 185.48M
+Trainable params: 183.12M
+```
+
+**3. Zero-shot Evaluation (Before Training)**
+```
+T->V: R@1: 31.6 - R@5: 56.4 - R@10: 66.3 - MdR: 4.0 - MnR: 30.1
+V->T: R@1: 33.2 - R@5: 57.5 - R@10: 66.4 - MdR: 4.0 - MnR: 27.7
+```
+
+**4. Training Progress**
+```
+eta: 4:19:13, epoch: 1/5, iter: 4300/5625, loss: 0.6159, lr: 0.000000094
+```
+
+| Field | Description |
+|-------|-------------|
+| `eta` | Estimated time remaining |
+| `epoch` | Current epoch / total epochs |
+| `iter` | Current iteration / total iterations |
+| `loss` | Training loss value |
+| `lr` | Learning rate |
+| `memory` | GPU memory usage |
+
+### Example Results (MSRVTT)
+
+| Metric | Text→Video | Video→Text |
+|--------|------------|------------|
+| R@1 | 31.6 | 33.2 |
+| R@5 | 56.4 | 57.5 |
+| R@10 | 66.3 | 66.4 |
+| MdR | 4.0 | 4.0 |
+| MnR | 30.1 | 27.7 |
 
 ## 📁 Project Structure
 
