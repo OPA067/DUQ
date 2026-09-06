@@ -151,20 +151,7 @@ CUDA_VISIBLE_DEVICES=0 python -m torch.distributed.launch \
 
 ## 💪 Experiments
 
-### Supported Datasets
-
-| Dataset | Description | Train Split | Test Split |
-|---------|-------------|-------------|------------|
-| MSRVTT | 10K videos, 200K captions | 6,513 | 1,000 |
-| LSMDC | Short movie clips | 91,941 | 9,827 |
-| ActivityNet | Long untrimmed videos | 50,000 | 49,298 |
-| Charades | Daily activity videos | 53,024 | 7,857 |
-| DiDeMo | Moment retrieval | 27,128 | 4,140 |
-| VATEX | 10K videos, 400K captions | 8,000 | 2,000 |
-
-### Pre-trained Checkpoints
-
-Coming soon.
+see DUQ/experiments
 
 ## 📁 Project Structure
 
