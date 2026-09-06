@@ -27,13 +27,11 @@ The two components work synergistically, jointly improving the accuracy of cross
 | 2025/06/01 | Updated code details and documentation |
 
 ## 😍 Motivation
-
 <p float="left">
   <img src="figures/Motivation.png" width="100%" />
 </p>
 
 ## 🏗️ Framework
-
 <p float="left">
   <img src="figures/Framework.png" width="100%" />
 </p>
