@@ -1,6 +1,6 @@
 <div align="center">
 
-# DUQ: Dual Uncertainty Quantification for Text-Video Retrieval
+# [IJCAI 2025 GUANGZHOU] DUQ: Dual Uncertainty Quantification for Text-Video Retrieval
 
 **Accepted by IJCAI 2025** 🎉
 
@@ -203,7 +203,7 @@ DUQ/
 
 ## 🎗️ Acknowledgments
 
-Our code is built upon [CLIP4Clip](https://github.com/ArrowLuo/CLIP4Clip/), [X-Pool](https://github.com/layer6ai-labs/xpool), and [HBI](https://github.com/jpthu17/HBI/tree/main). We sincerely appreciate their contributions.
+Our code is built upon [Clip4clip](https://github.com/ArrowLuo/CLIP4Clip/), [X-Pool](https://github.com/layer6ai-labs/xpool), and [HBI](https://github.com/jpthu17/HBI/tree/main). We sincerely appreciate their contributions.
 
 ## 📚 Citation
 
