@@ -387,6 +387,15 @@ If you find this work useful, please cite our paper:
 }
 ```
 
+## 📬 Contact
+
+If you have any questions, feel free to reach out:
+
+- **Issues**: For bug reports, feature requests, or general questions, please open a [GitHub Issue](https://github.com/OPA067/DUQ/issues).
+- **Email**: `xinl067@163.com`
+
+We welcome contributions and suggestions!
+
 ## 📄 License
 
 This project is released for academic research use only.
