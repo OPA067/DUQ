@@ -234,36 +234,37 @@ Each experiment generates a `log.txt` file containing the following sections:
 [2026-09-03 10:42:53 Model 170 INFO]: Effective parameters:
   <<< agg_module: seqTransf
   <<< alpha: 0.1
-  <<< anno_path: ./data/MSRVTT
+  <<< anno_path: MSRVTT
   <<< base_encoder: ViT-B/32
   <<< batch_size: 32
-  <<< beta: 0.01
+  <<< batch_size_val: 32
+  <<< beta: 0.0001
   <<< coef_lr: 0.001
-  <<< data_path: ./data
+  <<< data_path: MSRVTT/
   <<< datatype: msrvtt
-  <<< device: cuda
-  <<< distributed: True
-  <<< do_eval: False
-  <<< do_train: True
+  <<< device: cuda:0
+  <<< distributed: 0
+  <<< do_eval: 0
+  <<< do_train: 1
   <<< epochs: 5
   <<< feature_framerate: 1
-  <<< gamma: 1.0
+  <<< gamma: 0.0001
   <<< init_model: None
-  <<< interaction: 0
+  <<< interaction: wti
   <<< local_rank: 0
   <<< lr: 0.0001
   <<< max_frames: 12
-  <<< max_words: 24
-  <<< n_display: 50
+  <<< max_words: 32
+  <<< n_display: 100
   <<< num_hidden_layers: 4
-  <<< output_dir: None
+  <<< output_dir: experiments/MSRVTT/2026_09_03_10_42_53
   <<< seed: 42
-  <<< split_batch: 2
+  <<< split_batch: 32
   <<< video_framerate: 1
-  <<< video_path: None
+  <<< video_path: MSRVTT/videos
   <<< warmup_proportion: 0.1
-  <<< weight_decay: 0.01
-  <<< workers: 5
+  <<< weight_decay: 0.2
+  <<< workers: 8
   <<< world_size: 1
 ```
 
@@ -281,35 +282,37 @@ V->T: R@1: 33.2 - R@5: 57.5 - R@10: 66.4 - R@Sum: 157.1 - MdR: 4.0 - MnR: 27.7
 
 **4. Running Testing/Training Info**
 ```
-Running testing: Num examples = 1000, Batch size = 2, Num steps = 500
-Running training: Num examples = 6513, Batch size = 32, Num steps = 5625
+***** Running testing *****
+  Num examples = 1000
+  Batch size   = 32
+  Num steps    = 32
+***** Running training *****
+  Num examples = 180000
+  Batch size   = 32
+  Num steps    = 5625
 ```
 
-**5. Training Progress (per 50 iterations)**
+**5. Training Progress (per 100 iterations)**
 ```
-[2026-09-03 11:16:13 Model 500 INFO]: eta: 3:50:02, epoch: 1/5, iter: 50/5625, time: 4.0233, data: 0.0486, loss: 3.5292, lr: 0.000000442/0.000100000, logit: 4.6061, memory: 19814, grad_norm: 0.0181
+[2026-09-03 11:30:26 Model 463 INFO]: eta: 4:19:13, epoch: 1/5, iter: 4300/5625/4300/28125, time: 0.6480, data: 0.0614, loss: 0.6159, lr: 0.000000094/0.000094342, logit: 100.0, memory: 10.44GB
 ```
 
 | Field | Description | Example |
 |-------|-------------|---------|
 | `eta` | Estimated time remaining (HH:MM:SS) | `4:19:13` |
 | `epoch` | Current epoch / total epochs | `1/5` |
-| `iter` | Current iter / total iters | `4300/5625` |
-| `time` | Time per iteration (seconds) | `4.0233` |
-| `data` | Data loading time (seconds) | `0.0486` |
+| `iter` | Current iter / total iters / global iter / total global iters | `4300/5625/4300/28125` |
+| `time` | Time per iteration (seconds) | `0.6480` |
+| `data` | Data loading time (seconds) | `0.0614` |
 | `loss` | Training loss value | `0.6159` |
-| `lr` | Learning rate (current/max with warmup) | `0.000000094/0.000100000` |
-| `logit` | Logit scale value (temperature) | `4.6061` |
-| `memory` | GPU memory usage (MB) | `19814` |
-| `grad_norm` | Gradient norm (for monitoring) | `0.0181` |
+| `lr` | Learning rate (current/max with warmup) | `0.000000094/0.000094342` |
+| `logit` | Logit scale value (temperature) | `100.0` |
+| `memory` | GPU memory usage (GB) | `10.44GB` |
 
 **6. Evaluation Results (after each epoch)**
 ```
-[2026-09-03 15:23:08 Model 2837 INFO]: Evaluation Results:
-Text-to-Video Retrieval:
-R@1: 42.6, R@5: 70.2, R@10: 80.3, R@Sum: 193.1, MdR: 2.0, MnR: 16.7
-Video-to-Text Retrieval:
-R@1: 46.5, R@5: 73.3, R@10: 82.3, R@Sum: 202.1, MdR: 2.0, MnR: 12.1
+[2026-09-03 11:45:08 Model 705 INFO]: T->V: R@1: 45.8 - R@5: 72.7 - R@10: 83.0 - R@Sum: 201.5 - MdR: 2.0 - MnR: 11.7
+[2026-09-03 11:45:08 Model 711 INFO]: V->T: R@1: 48.1 - R@5: 73.9 - R@10: 83.8 - R@Sum: 205.8 - MdR: 2.0 - MnR: 9.2
 ```
 
 | Metric | Description |
@@ -321,35 +324,31 @@ R@1: 46.5, R@5: 73.3, R@10: 82.3, R@Sum: 202.1, MdR: 2.0, MnR: 12.1
 
 **7. Model Saving and Best Model Tracking**
 ```
-[2026-09-03 15:23:08 Model 2842 INFO]: Saving current best model...
-Best Text-to-Video Retrieval: R1: 42.6
-Best Video-to-Text Retrieval: R1: 46.5
+[2026-09-03 15:49:34 Model 801 INFO]: Best model: experiments/MSRVTT/2026_09_03_10_42_53/pytorch_model.bin.4, R1: 50.2000
 ```
 
-**8. Final Evaluation (Best Model)**
+**8. Training Summary**
 ```
-[2026-09-03 15:23:20 Model 2858 INFO]: Final Evaluation of the best model:
-Text-to-Video Retrieval:
-R@1: 42.6, R@5: 70.2, R@10: 80.3, R@Sum: 193.1, MdR: 2.0, MnR: 16.7
-Video-to-Text Retrieval:
-R@1: 46.5, R@5: 73.3, R@10: 82.3, R@Sum: 202.1, MdR: 2.0, MnR: 12.1
+training finished with 05h 06min 23s
 ```
 
-**9. Training Summary**
+**9. Final Evaluation (Best Model)**
 ```
-Total Training Time: 05h 06min 23s
+T->V: R@1: 50.4 - R@5: 75.4 - R@10: 85.5 - R@Sum: 211.3 - MdR: 1.0 - MnR: 10.9
+V->T: R@1: 50.6 - R@5: 76.1 - R@10: 86.2 - R@Sum: 212.9 - MdR: 1.0 - MnR: 9.4
 ```
 
-### Example Results (MSRVTT)
+### Epoch-by-Epoch Results (MSRVTT)
 
-| Metric | Text→Video | Video→Text |
-|--------|------------|------------|
-| R@1 | 31.6 | 33.2 |
-| R@5 | 56.4 | 57.5 |
-| R@10 | 66.3 | 66.4 |
-| R@Sum | 154.3 | 157.1 |
-| MdR | 4.0 | 4.0 |
-| MnR | 30.1 | 27.7 |
+| Epoch | T→V R@1 | T→V R@Sum | V→T R@1 | V→T R@Sum |
+|-------|---------|-----------|---------|-----------|
+| Zero-shot | 31.6 | 154.3 | 33.2 | 157.1 |
+| 1 | 45.8 | 201.5 | 48.1 | 205.8 |
+| 2 | 48.0 | 205.7 | 47.8 | 206.5 |
+| 3 | 49.3 | 210.0 | 51.0 | 213.9 |
+| 4 | 50.1 | 210.9 | 50.7 | 213.8 |
+| 5 | 50.2 | 211.1 | 50.8 | 213.7 |
+| **Final** | **50.4** | **211.3** | **50.6** | **212.9** |
 
 ### Key Parameters
 
@@ -358,7 +357,7 @@ Total Training Time: 05h 06min 23s
 | `--do_train` | Enable training mode | 0 |
 | `--do_eval` | Enable evaluation mode | 0 |
 | `--datatype` | Dataset name | msrvtt |
-| `--max_words` | Maximum text token length | 24 |
+| `--max_words` | Maximum text token length | 32 |
 | `--max_frames` | Maximum video frames | 12 |
 | `--lr` | Learning rate | 1e-4 |
 | `--coef_lr` | CLIP branch LR coefficient | 1e-3 |
