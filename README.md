@@ -81,7 +81,6 @@ DUQ/
 │   └── compress_video.py      # Video preprocessing & compression
 ├── docs/                      # Paper & supplementary materials
 │   ├── DUQ_Main.pdf
-│   ├── DUQ_SupplementaryMaterial.pdf
 │   ├── DUQ_Poster.pdf
 │   └── DUQ_Author_Response.pdf
 ├── experiments/               # Output directory for logs & checkpoints
