@@ -1,6 +1,5 @@
 <div align="center">
 
-# IJCAI2025, GuangZhou
 # Dual Uncertainty Quantification for Text-Video Retrieval
 
 **Accepted by IJCAI 2025** 🎉
@@ -11,12 +10,15 @@
 
 ## 📝 Introduction
 
-We propose a novel **Dual Uncertainty Quantification (DUQ)** model that separately handles two types of uncertainty in text-video retrieval:
+Text-video retrieval aims to find relevant videos given a text query (Text→Video) or relevant texts given a video query (Video→Text). A key challenge is that cross-modal similarity computation often suffers from uncertainty — noisy labels, ambiguous descriptions, and diverse visual content all introduce noise into the learned representations.
 
-- **Intra-pair similarity uncertainty**: Provides similarity-based trustworthy predictions and explicitly models the uncertainty within each text-video pair.
-- **Inter-pair distance uncertainty**: Constructs a distance-based diversity probability embedding, widening the gap between similar features across different pairs.
+We propose **Dual Uncertainty Quantification (DUQ)**, a model that explicitly handles two types of uncertainty in text-video retrieval:
 
-The two components work synergistically, jointly improving the accuracy of cross-modal similarity computation.
+- **Intra-pair similarity uncertainty**: Uses Evidential Deep Learning to model the uncertainty within each text-video pair, providing similarity-based trustworthy predictions. This helps the model distinguish between confident and uncertain matches.
+
+- **Inter-pair distance uncertainty**: Constructs a distance-based diversity probability embedding that widens the gap between similar features across different pairs, improving discriminability.
+
+The two components work synergistically, jointly improving the accuracy of cross-modal similarity computation. DUQ is built on top of CLIP and achieves strong performance on multiple benchmark datasets.
 
 ## 📣 Updates
 
@@ -97,21 +99,27 @@ DUQ/
 
 ## 😍 Visualization
 
-### Motivation
+### Paper Motivation Figure
+
+The motivation of DUQ. (a) A retrieval example where the query "a man is playing baseball" retrieves videos ranked by similarity. (b) Standard feature uncertainty models both intra-pair and inter-pair uncertainty in a shared embedding space, but fails to distinguish between them. (c) DUQ separates the two types of uncertainty: the intra-pair module handles similarity-based trustworthy predictions, while the inter-pair module constructs a distance-based diversity probability embedding that pushes apart similar features from different pairs.
 
 <p float="left">
-  <img src="figures/Motivation.png" width="80%" />
+  <img src="figures/Motivation.png" width="100%" />
 </p>
 
-### Framework
+### Paper Framework Figure
+
+Overall architecture of DUQ. The model consists of three modules: (1) **Feature Extraction Module** — extracts visual and textual features using CLIP's video and text encoders; (2) **Intra-pair Similarity Uncertainty Module** — models the uncertainty within each text-video pair via cross-attention and a Dirichlet distribution over similarity scores; (3) **Inter-pair Distance Uncertainty Module** — constructs probabilistic embeddings and learns a distance-based diversity distribution across different pairs to improve discriminability.
 
 <p float="left">
-  <img src="figures/Framework.png" width="80%" />
+  <img src="figures/Framework.png" width="100%" />
 </p>
 
 ## 🚀 Quick Start
 
 ### 1. Environment Setup
+
+We recommend using Conda to create a clean environment:
 
 ```bash
 # Create conda environment
@@ -123,24 +131,15 @@ pip install -r requirements.txt
 pip install torch==1.8.1+cu102 torchvision==0.9.1+cu102 -f https://download.pytorch.org/whl/torch_stable.html
 ```
 
-### 2. Download CLIP Model
+> 💡 **Note**: Adjust the PyTorch version according to your CUDA version. For CUDA 11.8, use `torch==2.0.1+cu118 torchvision==0.15.2+cu118`.
 
-Place the pretrained CLIP model in the `models/` directory:
+### 2. CLIP Model
 
-```bash
-cd DUQ/models
-
-# ViT-B/32 (default)
-wget https://openaipublic.azureedge.net/clip/models/40d365715913c9da98579312b702a82c18be219cc2a73407c4526f58eba950af/ViT-B-32.pt
-
-# ViT-B/16 (optional)
-# wget https://openaipublic.azureedge.net/clip/models/5806e77cd80f8b59890b7e101eabd078d9fb84e6937f9e85e4ecb61988df416f/ViT-B-16.pt
-
-# ViT-L/14 (optional)
-# wget https://openaipublic.azureedge.net/clip/models/b8cca3fd41ae0c99ba7e8951adf17d267cdb84cd88be6f7c2e0eca1737a03836/ViT-L-14.pt
-```
+The CLIP model will be automatically downloaded on first run. No manual setup needed.
 
 ### 3. Download Datasets
+
+Download the datasets you need and place them in the appropriate directories:
 
 | Dataset | Download Link | Description |
 |---------|---------------|-------------|
@@ -152,6 +151,8 @@ wget https://openaipublic.azureedge.net/clip/models/40d365715913c9da98579312b702
 | VATEX | [Download](https://eric-xw.github.io/vatex-website/download.html) | 41K videos with 825K bilingual captions |
 
 ### 4. Training
+
+Training is launched via `torch.distributed.launch` for both single-GPU and multi-GPU setups:
 
 ```bash
 # Single GPU
@@ -199,6 +200,8 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 python -m torch.distributed.launch \
 
 ### 5. Evaluation
 
+To evaluate a trained checkpoint, specify it via `--init_model`:
+
 ```bash
 CUDA_VISIBLE_DEVICES=0 python -m torch.distributed.launch \
     --master_port 2502 \
@@ -219,7 +222,7 @@ CUDA_VISIBLE_DEVICES=0 python -m torch.distributed.launch \
     --init_model experiments/MSRVTT/<RUN_NAME>/pytorch_model.bin.<EPOCH>
 ```
 
-> 📌 For more details, refer to the [`script/`](https://github.com/OPA067/DUQ/tree/master/script) directory.
+> 📌 For ready-to-use scripts, refer to the [`script/`](https://github.com/OPA067/DUQ/tree/master/script) directory.
 
 ## 💪 Experiments
 
@@ -348,7 +351,6 @@ V->T: R@1: 50.6 - R@5: 76.1 - R@10: 86.2 - R@Sum: 212.9 - MdR: 1.0 - MnR: 9.4
 | 3 | 49.3 | 210.0 | 51.0 | 213.9 |
 | 4 | 50.1 | 210.9 | 50.7 | 213.8 |
 | 5 | 50.2 | 211.1 | 50.8 | 213.7 |
-| **Final** | **50.4** | **211.3** | **50.6** | **212.9** |
 
 ### Key Parameters
 
